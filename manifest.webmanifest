@@ -1,6 +1,6 @@
 {
-  "name": "Αγορά Αθηνών",
-  "short_name": "Αγορά Αθηνών",
+  "name": "GRmarketcap",
+  "short_name": "GRmarketcap",
   "description": "Τιμές μετοχών του Χρηματιστηρίου Αθηνών, Γενικός Δείκτης και εικονικό χαρτοφυλάκιο.",
   "lang": "el",
   "start_url": "./",
@@ -9,8 +9,21 @@
   "background_color": "#1f2430",
   "theme_color": "#2a3040",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

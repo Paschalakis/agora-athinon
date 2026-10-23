@@ -1,7 +1,7 @@
-/* Αγορά Αθηνών: εφαρμογή (service worker).
+/* GRmarketcap: εφαρμογή (service worker).
    Πάντα δοκιμάζει πρώτα το δίκτυο, ώστε οι τιμές να είναι οι τελευταίες.
    Αν δεν υπάρχει internet, δείχνει ό,τι αποθηκεύτηκε την τελευταία φορά. */
-var CACHE = "agora-v1";
+var CACHE = "agora-v2";
 var SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", function (e) {

@@ -11,11 +11,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Αγορά Αθηνών">
+<meta name="apple-mobile-web-app-title" content="GRmarketcap">
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
-<title>Αγορά Αθηνών</title>
+<title>GRmarketcap</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: sticky top bar, summary strip, two mover lists, then a sortable market table; stock detail opens in a right-hand drawer (bottom sheet on phones). */
@@ -288,7 +288,7 @@ button.acct:hover { border-color: var(--accent); }
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>Αγορά Αθηνών</h1>
+      <h1>GRmarketcap</h1>
       <span class="pill" id="pill">Στιγμιότυπο</span>
     </div>
     <div class="topright">
@@ -406,7 +406,7 @@ button.acct:hover { border-color: var(--accent); }
 <div class="scrim" id="appScrim" hidden></div>
 <div class="panel authbox" id="appBox" role="dialog" aria-modal="true" aria-labelledby="appTitle" hidden>
   <div class="ahead"><h2 id="appTitle">Εγκατάσταση εφαρμογής</h2><button type="button" class="close" id="appClose" aria-label="Κλείσιμο">×</button></div>
-  <p class="note" style="margin:0">Βάλε την Αγορά Αθηνών στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.</p>
+  <p class="note" style="margin:0">Βάλε το GRmarketcap στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.</p>
   <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;line-height:1.5">
     <li>Άνοιξε τη σελίδα στο Safari.</li>
     <li>Πάτα το κουμπί «Κοινοποίηση» (τετράγωνο με βέλος προς τα πάνω) στο κάτω μέρος της οθόνης.</li>
@@ -922,7 +922,7 @@ var EN_EXACT = {
   "Allwyn (πρώην ΟΠΑΠ)": "Allwyn (formerly OPAP)",
   "Εφαρμογή": "App",
   "Εγκατάσταση εφαρμογής": "Install the app",
-  "Βάλε την Αγορά Αθηνών στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.": "Put Athens Market on your phone's home screen. It opens like an app, in its own window.",
+  "Βάλε το GRmarketcap στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.": "Put GRmarketcap on your phone's home screen. It opens like an app, in its own window.",
   "Άνοιξε τη σελίδα στο Safari.": "Open this page in Safari.",
   "Πάτα το κουμπί «Κοινοποίηση» (τετράγωνο με βέλος προς τα πάνω) στο κάτω μέρος της οθόνης.": "Tap the Share button (a square with an arrow pointing up) at the bottom of the screen.",
   "Διάλεξε «Προσθήκη στην οθόνη Αφετηρίας» και πάτα «Προσθήκη».": "Choose “Add to Home Screen” and tap “Add”.",
@@ -1007,7 +1007,6 @@ function trNode(n) {
   for (var c = n.firstChild; c; c = c.nextSibling) trNode(c);
 }
 if (LANG === "en") {
-  document.title = "Athens Market";
   trNode(document.body);
   new MutationObserver(function (ms) {
     ms.forEach(function (m) {
