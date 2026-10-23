@@ -245,6 +245,24 @@ tbody tr:hover { background: var(--bg); }
 .chartempty { color: var(--muted); font-size: 13px; padding: 28px 12px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
 .tab.toggle[aria-pressed="true"] { background: var(--up-soft); border-color: var(--up); color: var(--up); }
 .ctrlrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+button.acct { cursor: pointer; font: inherit; color: var(--fg); }
+button.acct:hover { border-color: var(--accent); }
+.authbox { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(420px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; z-index: 22; padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+.authbox h2 { font-size: 20px; font-weight: 800; }
+.authbox .ahead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.af { display: flex; flex-direction: column; gap: 10px; }
+.af label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.af input { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 15px; width: 100%; }
+.af input:focus { border-color: var(--accent); outline: none; }
+.btn.block { width: 100%; padding: 11px 14px; }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12.5px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font: inherit; font-size: 13.5px; text-align: left; }
+.linkbtn:hover { text-decoration: underline; }
+.amsg { font-size: 13.5px; min-height: 18px; }
+.amsg.err { color: var(--down); } .amsg.ok { color: var(--up); }
+.alinks { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.privacy { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 0; }
 #pf-body { display: flex; flex-direction: column; gap: 20px; }
 .pf-panel > h2 { font-size: 15px; font-weight: 700; padding: 14px 16px 6px; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 500; z-index: 30; max-width: calc(100% - 32px); }
@@ -366,6 +384,8 @@ tbody tr:hover { background: var(--bg); }
   </div>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<div class="scrim" id="authScrim" hidden></div>
+<div class="panel authbox" id="authBox" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden></div>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dname" hidden></aside>
@@ -670,7 +690,9 @@ YKNOT;1.3150;-2.59;49558419.00;Y/KNOT;31180;13:09
    (GitHub Pages). Για άλλο site βάλε π.χ.
    "https://raw.githubusercontent.com/ΟΝΟΜΑ/agora-athinon/main/data.json".
    Κενό = μόνο το ενσωματωμένο στιγμιότυπο. */
-var DATA_URL = "data.json";
+var DATA_URL = /github\.io$/.test(location.hostname) ? "data.json" : "https://raw.githubusercontent.com/Paschalakis/agora-athinon/main/data.json";
+/* Ρυθμίσεις Firebase για τη σύνδεση χρηστών (μόνο στο δημόσιο site). */
+var FIREBASE_CONFIG = {"apiKey": "AIzaSyDd3-HyjHU6Cji1DwPtZ6epuJxFUT6luws", "authDomain": "agora-athinon.firebaseapp.com", "projectId": "agora-athinon", "storageBucket": "agora-athinon.firebasestorage.app", "messagingSenderId": "178881580605", "appId": "1:178881580605:web:81019bf8af752c0b456454"};
 function start(QUOTE_LINES, META, HIST, INTRA) {
   var NAMES = {
     "ΕΤΕ": "Εθνική Τράπεζα", "ΕΥΡΩΒ": "Eurobank", "ΠΕΙΡ": "Τράπεζα Πειραιώς", "ΑΛΦΑ": "Alpha Bank", "OPTIMA": "Optima Bank",
@@ -922,6 +944,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   function toggleFav(sym) {
     if (favs[sym]) delete favs[sym]; else favs[sym] = true;
     saveFavs(); tabsHtml(); render();
+    if (pfRef) persist();
     if (!drawer.hidden && cur && cur.sym === sym) paint();
   }
 
@@ -1022,14 +1045,15 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   function setStorageNote() {
     document.getElementById("pf-storage").textContent = pfMode === "db"
       ? "Οι καταχωρήσεις αποθηκεύονται στον λογαριασμό σου και τις βλέπεις μόνο εσύ."
+      : pfMode === "norules" ? "Συνδέθηκες, αλλά η αποθήκευση στον λογαριασμό δεν είναι ακόμα ενεργή. Οι καταχωρήσεις μένουν σε αυτόν τον browser."
+      : FIREBASE_CONFIG ? "Οι καταχωρήσεις αποθηκεύονται μόνο σε αυτόν τον browser. Συνδέσου για να τις βλέπεις από κάθε συσκευή."
       : "Οι καταχωρήσεις αποθηκεύονται μόνο σε αυτόν τον browser.";
   }
   function persist() {
-    saveLocal();
-    if (!pfRef) return Promise.resolve();
-    var body = { txns: txns.slice(), updated: Date.now() };
+    if (!pfRef) { saveLocal(); return Promise.resolve(); }
+    var body = { txns: txns.slice(), favs: Object.keys(favs), updated: Date.now() };
     pfWriting = pfWriting.then(function () { return pfRef.set(body); }).catch(function (e) {
-      if (e && (e.code === "invalid_argument" || e.code === "revoked" || e.code === "not_granted")) { pfRef = null; pfMode = "local"; setStorageNote(); }
+      if (e && (e.code === "invalid_argument" || e.code === "revoked" || e.code === "not_granted" || e.code === "permission-denied")) { pfRef = null; pfMode = e.code === "permission-denied" ? "norules" : "local"; setStorageNote(); }
       toast(e && e.code === "quota_exceeded" ? "Ο χώρος αποθήκευσης γέμισε. Σβήσε κάποιες συναλλαγές." : "Η αποθήκευση στον λογαριασμό απέτυχε. Κρατήθηκε σε αυτόν τον browser.");
     });
     return pfWriting;
@@ -1047,7 +1071,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   }
   (function connect() {
     var c = window.claude;
-    if (!c || typeof c.use !== "function") { renderAcct(null); return; }
+    if (!c || typeof c.use !== "function") { if (FIREBASE_CONFIG) startFirebase(); else renderAcct(null); return; }
     Promise.all([c.use("db"), c.use("user")]).then(function (r) {
       var db = r[0], user = r[1];
       if (user) user.me().then(renderAcct).catch(function () { renderAcct(null); }); else renderAcct(null);
@@ -1071,6 +1095,189 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
       });
     }).catch(function () { renderAcct(null); });
   })();
+
+
+  /* ===== σύνδεση χρηστών με Firebase (δημόσιο site) ===== */
+  var fbAuth = null, fbUser = null, fbUnsub = null, authMode = "signin";
+  var authBox = document.getElementById("authBox"), authScrim = document.getElementById("authScrim");
+  function loadScript(src) {
+    return new Promise(function (ok, no) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  }
+  function authErr(e) {
+    var c = (e && e.code) || "";
+    var M = {
+      "auth/invalid-email": "Το email δεν είναι σωστό.",
+      "auth/missing-email": "Γράψε το email σου.",
+      "auth/missing-password": "Γράψε τον κωδικό σου.",
+      "auth/user-not-found": "Λάθος email ή κωδικός.",
+      "auth/wrong-password": "Λάθος email ή κωδικός.",
+      "auth/invalid-credential": "Λάθος email ή κωδικός.",
+      "auth/invalid-login-credentials": "Λάθος email ή κωδικός.",
+      "auth/email-already-in-use": "Υπάρχει ήδη λογαριασμός με αυτό το email. Πάτα «Σύνδεση».",
+      "auth/weak-password": "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες.",
+      "auth/too-many-requests": "Πολλές προσπάθειες. Δοκίμασε ξανά σε λίγα λεπτά.",
+      "auth/unauthorized-domain": "Η σύνδεση με Google δεν έχει ενεργοποιηθεί ακόμα για αυτό το site.",
+      "auth/operation-not-allowed": "Αυτός ο τρόπος σύνδεσης δεν έχει ενεργοποιηθεί ακόμα.",
+      "auth/network-request-failed": "Δεν υπάρχει σύνδεση στο internet. Δοκίμασε ξανά.",
+      "auth/requires-recent-login": "Για λόγους ασφαλείας, αποσυνδέσου, συνδέσου ξανά και δοκίμασε πάλι.",
+      "auth/account-exists-with-different-credential": "Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδέσου με email και κωδικό."
+    };
+    if (c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request") return "";
+    if (/api-key/.test(c)) return "Οι ρυθμίσεις σύνδεσης του site δεν είναι σωστές.";
+    return M[c] || "Κάτι πήγε στραβά. Δοκίμασε ξανά" + (c ? " (" + c + ")" : "") + ".";
+  }
+  function setMsg(t, ok) { var m = document.getElementById("amsg"); if (m) { m.textContent = t || ""; m.className = "amsg " + (ok ? "ok" : "err"); } }
+  function openAuth(mode) { authMode = mode || (fbUser ? "account" : "signin"); paintAuth(); authBox.hidden = false; authScrim.hidden = false; var f = authBox.querySelector("input, button.btn"); if (f) f.focus(); }
+  function closeAuth() { authBox.hidden = true; authScrim.hidden = true; var a = document.getElementById("acct"); if (a && a.focus) a.focus(); }
+  authScrim.addEventListener("click", closeAuth);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !authBox.hidden) closeAuth(); });
+  var PRIVACY = '<p class="privacy">Αποθηκεύουμε μόνο το email σου (ή το όνομα του λογαριασμού Google) και τις εικονικές συναλλαγές και τα αγαπημένα σου, ώστε να τα βλέπεις από κάθε συσκευή. Δεν τα βλέπει κανείς άλλος και δεν χρησιμοποιούνται για διαφήμιση. Μπορείς να διαγράψεις τον λογαριασμό σου όποτε θες από αυτό εδώ το παράθυρο.</p>';
+  function paintAuth() {
+    var head = function (t) { return '<div class="ahead"><h2 id="authTitle">' + t + '</h2><button type="button" class="close" data-a="close" aria-label="Κλείσιμο">×</button></div>'; };
+    var h = "";
+    if (authMode === "account" && fbUser) {
+      h = head("Ο λογαριασμός μου") +
+        '<div class="note" id="aemail"></div>' +
+        '<div class="amsg" id="amsg" role="alert"></div>' +
+        '<button type="button" class="btn block" data-a="signout">Αποσύνδεση</button>' +
+        '<button type="button" class="btn block danger" data-a="delete">Διαγραφή λογαριασμού</button>' + PRIVACY;
+    } else if (authMode === "reset") {
+      h = head("Ξέχασα τον κωδικό") +
+        '<p class="note" style="margin:0">Γράψε το email σου και θα σου στείλουμε σύνδεσμο για νέο κωδικό.</p>' +
+        '<form class="af" id="af" novalidate><label>Email<input id="a-email" type="email" autocomplete="email" required></label>' +
+        '<div class="amsg" id="amsg" role="alert"></div><button type="submit" class="btn primary block">Αποστολή συνδέσμου</button></form>' +
+        '<div class="alinks"><button type="button" class="linkbtn" data-a="signin">← Πίσω στη σύνδεση</button></div>';
+    } else {
+      var up = authMode === "signup";
+      h = head(up ? "Δημιουργία λογαριασμού" : "Σύνδεση") +
+        '<p class="note" style="margin:0">' + (up ? "Με λογαριασμό βλέπεις το χαρτοφυλάκιο και τα αγαπημένα σου από κάθε συσκευή." : "Συνδέσου για να βλέπεις το χαρτοφυλάκιο και τα αγαπημένα σου από κάθε συσκευή.") + "</p>" +
+        '<button type="button" class="btn block" data-a="google">Συνέχεια με Google</button>' +
+        '<div class="or">ή με email</div>' +
+        '<form class="af" id="af" novalidate><label>Email<input id="a-email" type="email" autocomplete="email" required></label>' +
+        '<label>Κωδικός' + (up ? " (τουλάχιστον 6 χαρακτήρες)" : "") + '<input id="a-pass" type="password" autocomplete="' + (up ? "new-password" : "current-password") + '" required></label>' +
+        '<div class="amsg" id="amsg" role="alert"></div><button type="submit" class="btn primary block">' + (up ? "Δημιουργία λογαριασμού" : "Σύνδεση") + "</button></form>" +
+        '<div class="alinks">' + (up ? '<button type="button" class="linkbtn" data-a="signin">Έχεις ήδη λογαριασμό; Σύνδεση</button>' : '<button type="button" class="linkbtn" data-a="signup">Νέος χρήστης; Εγγραφή</button><button type="button" class="linkbtn" data-a="reset">Ξέχασα τον κωδικό</button>') + "</div>" + PRIVACY;
+    }
+    authBox.innerHTML = h;
+    var em = document.getElementById("aemail");
+    if (em && fbUser) em.textContent = "Συνδεδεμένος ως " + (fbUser.email || fbUser.displayName || "χρήστης");
+    var form = document.getElementById("af");
+    if (form) form.addEventListener("submit", onAuthSubmit);
+  }
+  authBox.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-a]"); if (!b) return;
+    var a = b.getAttribute("data-a");
+    if (a === "close") return closeAuth();
+    if (a === "signin" || a === "signup" || a === "reset") { authMode = a; paintAuth(); var i = authBox.querySelector("input"); if (i) i.focus(); return; }
+    if (a === "google") {
+      setMsg("");
+      var prov = new firebase.auth.GoogleAuthProvider();
+      fbAuth.signInWithPopup(prov).then(function () { closeAuth(); toast("Συνδέθηκες"); }).catch(function (err) {
+        if (err && (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment")) return fbAuth.signInWithRedirect(prov);
+        setMsg(authErr(err));
+      });
+      return;
+    }
+    if (a === "signout") { fbAuth.signOut().then(function () { closeAuth(); toast("Αποσυνδέθηκες"); }); return; }
+    if (a === "delete") {
+      if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Πάτα ξανά για οριστική διαγραφή"; setMsg("Θα σβηστούν ο λογαριασμός, το χαρτοφυλάκιο και τα αγαπημένα σου. Δεν αναιρείται."); return; }
+      var u = fbAuth.currentUser; if (!u) return;
+      var ref = firebase.firestore().collection("users").doc(u.uid);
+      if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+      pfRef = null;
+      ref.delete().catch(function () {}).then(function () { return u.delete(); }).then(function () { closeAuth(); toast("Ο λογαριασμός διαγράφηκε"); }).catch(function (err) { setMsg(authErr(err)); });
+    }
+  });
+  function onAuthSubmit(e) {
+    e.preventDefault();
+    var email = (document.getElementById("a-email").value || "").trim();
+    var pw = document.getElementById("a-pass") ? document.getElementById("a-pass").value : "";
+    var btn = authBox.querySelector('button[type="submit"]'); btn.disabled = true;
+    var done = function () { btn.disabled = false; };
+    if (authMode === "reset") {
+      fbAuth.sendPasswordResetEmail(email).then(function () { setMsg("Αν υπάρχει λογαριασμός με αυτό το email, σου στείλαμε σύνδεσμο. Δες και στα ανεπιθύμητα.", true); done(); }).catch(function (err) { setMsg(authErr(err)); done(); });
+      return;
+    }
+    var p = authMode === "signup" ? fbAuth.createUserWithEmailAndPassword(email, pw) : fbAuth.signInWithEmailAndPassword(email, pw);
+    p.then(function () { closeAuth(); toast(authMode === "signup" ? "Ο λογαριασμός δημιουργήθηκε" : "Συνδέθηκες"); done(); }).catch(function (err) { setMsg(authErr(err)); done(); });
+  }
+  function renderAcctFb(user) {
+    var old = document.getElementById("acct");
+    var el = document.createElement("button");
+    el.type = "button"; el.className = "acct"; el.id = "acct";
+    if (!user) {
+      el.innerHTML = '<span class="ic" aria-hidden="true">→</span><span class="an">Σύνδεση / Εγγραφή</span>';
+      el.title = "Συνδέσου για να βλέπεις το χαρτοφυλάκιό σου από κάθε συσκευή";
+    } else {
+      var label = user.displayName || user.email || "Ο λογαριασμός μου";
+      el.innerHTML = (user.photoURL ? '<img alt="" referrerpolicy="no-referrer">' : '<span class="ic" aria-hidden="true"></span>') + '<span style="min-width:0;display:flex;flex-direction:column;line-height:1.25;text-align:left"><span class="an"></span><span class="as">Συνδεδεμένος</span></span>';
+      if (user.photoURL) el.querySelector("img").src = user.photoURL; else el.querySelector(".ic").textContent = label.charAt(0).toUpperCase();
+      el.querySelector(".an").textContent = label;
+      el.title = "Ο λογαριασμός μου";
+    }
+    el.addEventListener("click", function () { openAuth(); });
+    old.parentNode.replaceChild(el, old);
+  }
+  function mergeTx(a, b) {
+    var seen = {}, out = [];
+    a.concat(b).forEach(function (t) { if (t && t.id && !seen[t.id]) { seen[t.id] = 1; out.push(t); } });
+    return out;
+  }
+  function startFirebase() {
+    var acct = document.getElementById("acct");
+    acct.innerHTML = '<span class="ic" aria-hidden="true">…</span><span class="as">Φόρτωση…</span>';
+    var base = "https://www.gstatic.com/firebasejs/10.12.2/";
+    loadScript(base + "firebase-app-compat.js")
+      .then(function () { return Promise.all([loadScript(base + "firebase-auth-compat.js"), loadScript(base + "firebase-firestore-compat.js")]); })
+      .then(function () {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        fbAuth = firebase.auth();
+        fbAuth.languageCode = "el";
+        var fdb = firebase.firestore();
+        fbAuth.getRedirectResult().catch(function (err) { var t = authErr(err); if (t) toast(t); });
+        fbAuth.onAuthStateChanged(function (user) {
+          fbUser = user;
+          if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+          renderAcctFb(user);
+          if (!user) {
+            pfRef = null; pfMode = "local";
+            txns = fixTx(loadLocal());
+            favs = {}; try { (JSON.parse(localStorage.getItem("agora-favs") || "[]")).forEach(function (s) { favs[fixSym(s)] = true; }); } catch (e) {}
+            setStorageNote(); renderPortfolio(); tabsHtml(); render();
+            return;
+          }
+          var ref = fdb.collection("users").doc(user.uid), first = true;
+          fbUnsub = ref.onSnapshot(function (snap) {
+            var d = snap.exists ? (snap.data() || {}) : {};
+            if (first) {
+              first = false; pfRef = ref; pfMode = "db"; setStorageNote();
+              var remote = fixTx(Array.isArray(d.txns) ? d.txns : []);
+              var guest = fixTx(loadLocal());
+              var merged = mergeTx(remote, guest);
+              var f2 = {}; (Array.isArray(d.favs) ? d.favs : []).forEach(function (s) { f2[fixSym(s)] = true; });
+              var before = Object.keys(f2).length;
+              Object.keys(favs).forEach(function (s) { f2[s] = true; });
+              txns = merged; favs = f2;
+              if (!snap.exists || merged.length !== remote.length || Object.keys(f2).length !== before) {
+                persist().then(function () { if (pfRef) { try { localStorage.removeItem(LKEY); } catch (e) {} } });
+                if (guest.length && merged.length !== remote.length) toast("Οι συναλλαγές αυτού του browser μεταφέρθηκαν στον λογαριασμό σου");
+              }
+            } else if (snap.exists && !snap.metadata.hasPendingWrites) {
+              txns = fixTx(Array.isArray(d.txns) ? d.txns : []);
+              var f3 = {}; (Array.isArray(d.favs) ? d.favs : []).forEach(function (s) { f3[fixSym(s)] = true; }); favs = f3;
+            }
+            renderPortfolio(); tabsHtml(); render();
+            if (!drawer.hidden && cur) paint();
+          }, function (err) {
+            pfRef = null; pfMode = err && err.code === "permission-denied" ? "norules" : "local"; setStorageNote();
+          });
+        });
+      })
+      .catch(function () {
+        var a = document.getElementById("acct");
+        a.innerHTML = '<span class="ic" aria-hidden="true">!</span><span class="as">Η σύνδεση δεν είναι διαθέσιμη τώρα</span>';
+      });
+  }
 
   function holdings() {
     var map = {}, realized = 0;
