@@ -1,54 +1,31 @@
-name: Ενημέρωση τιμών
+# Αγορά Αθηνών
 
-on:
-  # Κάθε 15 λεπτά, Δευτέρα-Παρασκευή, 07:00-15:59 UTC.
-  # Καλύπτει τη συνεδρίαση του Χρηματιστηρίου Αθηνών (10:15-17:20 ώρα Ελλάδας)
-  # και με θερινή και με χειμερινή ώρα.
-  schedule:
-    - cron: "*/15 7-15 * * 1-5"
-  # Κουμπί «Run workflow» για χειροκίνητη εκτέλεση
-  workflow_dispatch:
+Πίνακας μετοχών του Χρηματιστηρίου Αθηνών σε στυλ CoinMarketCap, με κλάδους και εικονικό χαρτοφυλάκιο.
+Οι τιμές ενημερώνονται αυτόματα κάθε 15 λεπτά στις ώρες συνεδρίασης.
 
-permissions:
-  contents: write
+## Τι περιέχει
 
-concurrency:
-  group: update-prices
-  cancel-in-progress: false
+| Αρχείο | Τι κάνει |
+|---|---|
+| `index.html` | Η σελίδα του site |
+| `data.json` | Οι τιμές. Το ενημερώνει αυτόματα το script |
+| `scripts/fetch_data.py` | Παίρνει τιμές από capital.gr και κεφαλαιοποίηση από euro2day.gr |
+| `.github/workflows/update-prices.yml` | Τρέχει το script κάθε 15′, Δευτέρα–Παρασκευή |
 
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
+## Πώς δουλεύει
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+1. Το GitHub τρέχει το `fetch_data.py` κάθε 15 λεπτά (07:00–15:59 UTC, δηλαδή στις ώρες συνεδρίασης).
+2. Το script γράφει νέο `data.json` και το αποθηκεύει στο repository.
+3. Η σελίδα, όταν ανοίγει, διαβάζει το `data.json`. Αν δεν το βρει, δείχνει το στιγμιότυπο που έχει μέσα της.
 
-      - name: Εγκατάσταση βιβλιοθηκών
-        run: pip install requests beautifulsoup4
+Αν η πηγή αλλάξει μορφή και το script διαβάσει λιγότερες από 150 μετοχές, **δεν** αλλάζει το `data.json`.
+Το site συνεχίζει με τις τελευταίες σωστές τιμές και η εκτέλεση εμφανίζεται με κόκκινο ✗ στην καρτέλα **Actions**.
 
-      - name: Λήψη τιμών
-        run: python scripts/fetch_data.py
+## Χειροκίνητη ενημέρωση
 
-      - name: Αποθήκευση data.json
-        run: |
-          git config user.name "price-bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.json
-          if git diff --cached --quiet; then
-            echo "Καμία αλλαγή στις τιμές."
-          else
-            git commit -m "Ενημέρωση τιμών $(date -u +'%Y-%m-%d %H:%M') UTC"
-            git push
-          fi
+**Actions → Ενημέρωση τιμών → Run workflow**.
 
-      - name: Αρχεία διάγνωσης (μόνο αν αποτύχει)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-html
-          path: debug/
-          if-no-files-found: ignore
+## Σημείωση
+
+Τα δεδομένα ανήκουν στο capital.gr και στο euro2day.gr. Για δημόσια χρήση έλεγξε τους όρους χρήσης τους.
+Δεν αποτελεί επενδυτική πληροφόρηση.

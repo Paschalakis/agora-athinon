@@ -241,17 +241,17 @@ tbody tr:hover { background: var(--bg); }
 @media (max-width: 640px) { .phead h2 { font-size: 18px; } }
 </style>
 
-<div class="demo demo-band"><p><strong>Στιγμιότυπο.</strong> Οι τιμές προέρχονται από το capital.gr (καθυστέρηση 15 λεπτών) και η κεφαλαιοποίηση με τα ονόματα από το euro2day.gr (ώρα σελίδας 10:58, 23/10/2026). Τα στοιχεία δεν ενημερώνονται αυτόματα και δεν αποτελούν επενδυτική πληροφόρηση.</p></div>
+<div class="demo demo-band"><p id="banner"><strong>Στιγμιότυπο.</strong> Οι τιμές προέρχονται από το capital.gr (καθυστέρηση 15 λεπτών) και η κεφαλαιοποίηση με τα ονόματα από το euro2day.gr (ώρα σελίδας 10:58, 23/10/2026). Τα στοιχεία δεν ενημερώνονται αυτόματα και δεν αποτελούν επενδυτική πληροφόρηση.</p></div>
 
 <div class="wrap">
   <header class="top">
     <div class="brand">
       <h1>Αγορά Αθηνών</h1>
-      <span class="pill">Στιγμιότυπο</span>
+      <span class="pill" id="pill">Στιγμιότυπο</span>
     </div>
     <div class="topright">
       <div class="acct" id="acct" aria-live="polite"><span class="ic" aria-hidden="true">?</span><span class="as">Έλεγχος λογαριασμού…</span></div>
-      <div class="asof">Πηγές: capital.gr, euro2day.gr</div>
+      <div class="asof" id="asof">Πηγές: capital.gr, euro2day.gr</div>
     </div>
   </header>
 
@@ -647,7 +647,12 @@ YKNOT;1.3700;1.48;50128056.00;Y/KNOT
 </script>
 
 <script>
-(function () {
+/* Από πού διαβάζονται οι ζωντανές τιμές. "data.json" = το αρχείο δίπλα στη σελίδα
+   (GitHub Pages). Για άλλο site βάλε π.χ.
+   "https://raw.githubusercontent.com/ΟΝΟΜΑ/agora-athinon/main/data.json".
+   Κενό = μόνο το ενσωματωμένο στιγμιότυπο. */
+var DATA_URL = "data.json";
+function start(QUOTE_LINES, META) {
   var NAMES = {
     "ΕΤΕ": "Εθνική Τράπεζα", "ΕΥΡΩΒ": "Eurobank", "ΠΕΙΡ": "Τράπεζα Πειραιώς", "ΑΛΦΑ": "Alpha Bank", "OPTIMA": "Optima Bank",
     "BOCHGR": "Bank of Cyprus", "ΔΕΗ": "ΔΕΗ", "ΕΛΠΕ": "Helleniq Energy", "ΜΟΗ": "Motor Oil", "ΤΕΝΕΡΓ": "Τέρνα Ενεργειακή",
@@ -677,7 +682,7 @@ YKNOT;1.3700;1.48;50128056.00;Y/KNOT
   var SECMAP = {};
   Object.keys(SEC).forEach(function (k) { SEC[k].forEach(function (s) { SECMAP[s] = k; }); });
   var OTHER = "Λοιπές";
-  var rows = document.getElementById("quotes").textContent.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+  var rows = QUOTE_LINES.map(function (l) {
     var p = l.split(";");
     var price = parseFloat(p[1].replace(",", "."));
     var chg = parseFloat(p[2].replace(/[%\s]/g, "").replace(",", "."));
@@ -1120,7 +1125,36 @@ YKNOT;1.3700;1.48;50128056.00;Y/KNOT
   renderPortfolio();
   if (location.hash === "#portfolio") showView("portfolio");
 
+  function showLive(m) {
+    var d = new Date(m.updated), ok = !isNaN(d.getTime());
+    var when = ok ? d.toLocaleString("el-GR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Athens" }) : "άγνωστη ώρα";
+    var fresh = ok && (Date.now() - d.getTime()) < 60 * 60000;
+    document.getElementById("pill").textContent = fresh ? "Καθυστέρηση 15′" : "Τελευταία ενημέρωση";
+    document.getElementById("banner").innerHTML = "<strong>Τιμές με καθυστέρηση 15 λεπτών.</strong> Τελευταία ενημέρωση: " + esc(when) + (/\.$/.test(when) ? " " : ". ") + "Οι τιμές ενημερώνονται αυτόματα κάθε 15 λεπτά στις ώρες συνεδρίασης. Πηγές: capital.gr (τιμές), euro2day.gr (κεφαλαιοποίηση). Δεν αποτελεί επενδυτική πληροφόρηση.";
+    document.getElementById("asof").textContent = "Ενημέρωση: " + when;
+  }
   render();
+  if (META) showLive(META);
+}
+
+(function boot() {
+  var emb = document.getElementById("quotes").textContent.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+  var done = false;
+  function go(lines, meta) { if (done) return; done = true; start(lines, meta); }
+  if (!DATA_URL || DATA_URL.indexOf("__") === 0 || typeof fetch !== "function" || location.protocol === "file:") { go(emb, null); return; }
+  var ctl = typeof AbortController === "function" ? new AbortController() : null;
+  var timer = setTimeout(function () { if (ctl) ctl.abort(); go(emb, null); }, 6000);
+  var url = DATA_URL + (DATA_URL.indexOf("?") > -1 ? "&" : "?") + "t=" + Math.floor(Date.now() / 60000);
+  fetch(url, { cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (d) {
+      clearTimeout(timer);
+      if (!d || !Array.isArray(d.stocks) || d.stocks.length < 50) throw new Error("bad data");
+      go(d.stocks.map(function (s) {
+        return [s.sym, s.price, s.chg, s.mcap == null ? "" : s.mcap, String(s.name || "").replace(/;/g, ",")].join(";");
+      }), d);
+    })
+    .catch(function () { clearTimeout(timer); go(emb, null); });
 })();
 </script>
 
