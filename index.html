@@ -1037,13 +1037,20 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   var SECMAP = {};
   Object.keys(SEC).forEach(function (k) { SEC[k].forEach(function (s) { SECMAP[s] = k; }); });
   var OTHER = "Λοιπές";
+  /* λατινικά σύμβολα και αγγλικά ονόματα για την αγγλική έκδοση */
+  var SYM_EN = {"ΑΑΑΚ": "AAAK", "ΑΒΑΞ": "AVAX", "ΑΒΕ": "AVE", "ΑΔΜΗΕ": "ADMIE", "ΑΚΡΙΤ": "AKRIT", "ΑΛΜΥ": "ALMY", "ΑΛΦΑ": "ALPHA", "ΑΝΔΡΟ": "ANDRO", "ΑΣΚΟ": "ASCO", "ΑΣΤΑΚ": "ASTAK", "ΑΤΕΚ": "ATEK", "ΑΤΤΙΚΑ": "ATTICA", "ΒΑΡΝΗ": "VARNH", "ΒΙΟ": "VIO", "ΒΙΟΚΑ": "BIOKA", "ΒΙΟΣΚ": "BIOSK", "ΒΙΟΤ": "BIOT", "ΒΙΣ": "VIS", "ΒΟΣΥΣ": "VOSYS", "ΓΕΒΚΑ": "GEBKA", "ΓΕΚΤΕΡΝΑ": "GEKTERNA", "ΔΑΙΟΣ": "DAIOS", "ΔΟΜΙΚ": "DOMIK", "ΔΡΟΜΕ": "DROME", "ΕΒΡΟΦ": "EVROF", "ΕΕΕ": "EEE", "ΕΚΤΕΡ": "EKTER", "ΕΛΒΕ": "ELBE", "ΕΛΙΝ": "ELIN", "ΕΛΛΑΚΤΩΡ": "ELLAKTOR", "ΕΛΠΕ": "ELPE", "ΕΛΣΤΡ": "ELSTR", "ΕΛΤΟΝ": "ELTON", "ΕΛΧΑ": "ELHA", "ΕΝΤΕΡ": "ENTER", "ΕΠΣΙΛ": "EPSIL", "ΕΤΕ": "ETE", "ΕΥΑΠΣ": "EYAPS", "ΕΥΔΑΠ": "EYDAP", "ΕΥΡΩΒ": "EUROB", "ΙΑΤΡ": "IATR", "ΙΚΤΙΝ": "IKTIN", "ΙΛΥΔΑ": "ILYDA", "ΙΝΛΙΦ": "INLIF", "ΙΝΤΕΚ": "INTEK", "ΙΝΤΕΡΚΟ": "INTERCO", "ΙΝΤΕΤ": "INTET", "ΚΑΜΠ": "KAMP", "ΚΕΚΡ": "KEKR", "ΚΕΠΕΝ": "KEPEN", "ΚΟΡΔΕ": "KORDE", "ΚΡΕΚΑ": "KREKA", "ΚΡΙ": "KRI", "ΚΤΗΛΑ": "KTILA", "ΛΑΒΙ": "LAVI", "ΛΑΜΔΑ": "LAMDA", "ΛΑΝΑΚ": "LANAC", "ΛΙΒΑΝ": "LIVAN", "ΜΑΘΙΟ": "MATHIO", "ΜΕΒΑ": "MEVA", "ΜΕΡΚΟ": "MERKO", "ΜΙΓ": "MIG", "ΜΙΝ": "MIN", "ΜΛΣ": "MLS", "ΜΟΗ": "MOH", "ΜΟΝΤΑ": "MODA", "ΜΟΤΟ": "MOTO", "ΜΟΥΖΚ": "MOYZK", "ΜΠΕΛΑ": "BELA", "ΜΠΛΕΚΕΔΡΟΣ": "BLEKEDROS", "ΜΥΤΙΛ": "MYTIL", "ΝΑΚΑΣ": "NAKAS", "ΝΑΥΠ": "NAYP", "ΟΛΘ": "OLTH", "ΟΛΥΜΠ": "OLYMP", "ΟΡΙΛΙΝΑ": "ORILINA", "ΟΤΟΕΛ": "OTOEL", "ΠΑΙΡ": "PAIR", "ΠΑΠ": "PAP", "ΠΕΤΡΟ": "PETRO", "ΠΛΑΚΡ": "PLAKR", "ΠΡΔ": "PRD", "ΠΡΕΜΙΑ": "PREMIA", "ΠΡΟΝΤΕΑ": "PRODEA", "ΠΡΟΦ": "PROF", "ΡΕΒΟΙΛ": "REVOIL", "ΣΑΡ": "SAR", "ΣΑΤΟΚ": "SATOK", "ΣΙΔΜΑ": "SIDMA", "ΤΡΑΣΤΟΡ": "TRASTOR", "ΤΡΕΣΤΑΤΕΣ": "TRESTATES", "ΥΑΛΚΟ": "YALCO", "ΦΙΕΡ": "FIER", "ΦΛΕΞΟ": "FLEXO", "ΦΡΙΓΟ": "FRIGO", "ΧΑΙΔΕ": "HAIDE", "ΑΡΑΙΓ": "AEGN", "ΑΤΡΑΣΤ": "ATRUST", "ΕΠΙΛΚ": "EPIL", "ΕΧΑΕ": "EXAE", "ΙΝΤΚΑ": "INTRK", "ΚΑΡΕΛ": "KARE", "ΚΟΥΑΛ": "QUAL", "ΚΟΥΕΣ": "QUEST", "ΛΑΜΨΑ": "LAMPS", "ΛΕΒΚ": "LEBEK", "ΛΕΒΠ": "LEBEP", "ΛΟΓΟΣ": "LOGISMOS", "ΛΟΥΛΗ": "KYLO", "ΜΕΝΤΙ": "MEDIC", "ΜΠΡΙΚ": "BRIQ", "ΞΥΛΚ": "XYLEK", "ΞΥΛΠ": "XYLEP", "ΟΛΠ": "PPA", "ΟΤΕ": "HTO", "ΠΕΙΡ": "TPEIR", "ΠΛΑΘ": "PLAT", "ΣΕΝΤΡ": "CENTR", "ΣΠΕΙΣ": "SPACE", "ΣΠΥΡ": "SPIR", "ΤΕΝΕΡΓ": "TENERGY", "ΦΡΛΚ": "FOYRK", "ΔΕΗ": "PPC", "ΕΛΛ": "TELL", "ΔΑΑ": "AIA", "ΠΛΑΙΣ": "PLAIS", "ΙΑΣΩ": "IASO", "ΠΕΡΦ": "PERF", "ΕΥΠΙΚ": "EUPIC", "ΒΙΝΤΑ": "VIDAVO", "ΑΝΕΚ": "ANEK", "ΜΙΝΟΑ": "MINOA", "ΣΠΙ": "CPI", "ΤΖΚΑ": "PROFK", "ΚΑΙΡΟΜΕΖ": "CAIROMEZ", "ΝΤΟΤΣΟΦΤ": "DOTSOFT", "ΦΑΙΣ": "FAIS", "ΦΟΥΝΤΛ": "FOODL", "ΦΒΜΕΖΖ": "PVMEZZ", "ΣΑΝΜΕΖΖ": "SUNMEZZ", "ΓΚΜΕΖΖ": "GCMEZZ"};
+  var NAME_EN = {"ΑΑΑΚ": "Wool Industry Tria Alfa S.A.", "ΑΒΑΞ": "Avax S.A.", "ΑΒΕ": "AVE S.A.", "ΑΔΜΗΕ": "ADMIE (IPTO) Holding S.A.", "ΑΚΡΙΤ": "Akritas S.A.", "ΑΛΜΥ": "Alumil Aluminium Industry S.A.", "ΑΛΦΑ": "Alpha Services and Holdings S.A.", "ΑΝΔΡΟ": "Alpha Trust-Andromeda Investment Trust S.A.", "ΑΣΚΟ": "A.S. Company S.A.", "ΑΣΤΑΚ": "Alpha Astika Akinita S.A.", "ΑΤΕΚ": "Attica Publications S.A.", "ΑΤΤΙΚΑ": "Attica Holdings S.A.", "ΒΑΡΝΗ": "Varvaressos S.A.", "ΒΙΟ": "Viohalco S.A./N.V.", "ΒΙΟΚΑ": "Biokarpet S.A.", "ΒΙΟΣΚ": "Unibios Holdings S.A.", "ΒΙΟΤ": "Bioter S.A.", "ΒΙΣ": "Vis S.A.", "ΒΟΣΥΣ": "Voyatzoglou Systems S.A.", "ΓΕΒΚΑ": "General Commercial & Industrial S.A.", "ΓΕΚΤΕΡΝΑ": "GEK Terna S.A.", "ΔΑΙΟΣ": "Daios Plastics S.A.", "ΔΟΜΙΚ": "Domiki Kritis S.A.", "ΔΡΟΜΕ": "Dromeas S.A.", "ΕΒΡΟΦ": "Evrofarma S.A.", "ΕΕΕ": "Coca-Cola HBC AG", "ΕΚΤΕΡ": "Ekter S.A.", "ΕΛΒΕ": "Elve S.A.", "ΕΛΙΝ": "Elinoil Hellenic Petroleum Company S.A.", "ΕΛΛΑΚΤΩΡ": "Ellaktor S.A.", "ΕΛΠΕ": "Helleniq Energy Holdings S.A.", "ΕΛΣΤΡ": "Elastron S.A.", "ΕΛΤΟΝ": "Elton S.A.", "ΕΛΧΑ": "ElvalHalcor S.A.", "ΕΝΤΕΡ": "Entersoft S.A.", "ΕΠΣΙΛ": "Epsilon Net S.A.", "ΕΤΕ": "National Bank of Greece S.A.", "ΕΥΑΠΣ": "Thessaloniki Water & Sewerage S.A.", "ΕΥΔΑΠ": "Athens Water Supply & Sewerage S.A.", "ΕΥΡΩΒ": "Eurobank Ergasias Services and Holdings S.A.", "ΙΑΤΡ": "Athens Medical Group", "ΙΚΤΙΝ": "Iktinos Hellas S.A.", "ΙΛΥΔΑ": "Ilyda S.A.", "ΙΝΛΙΦ": "Interlife S.A.", "ΙΝΤΕΚ": "Ideal Holdings S.A.", "ΙΝΤΕΡΚΟ": "Intercontinental International REIC", "ΙΝΤΕΤ": "Intertech S.A.", "ΚΑΜΠ": "Reds S.A.", "ΚΕΚΡ": "Kekrops S.A.", "ΚΕΠΕΝ": "Kepenos Flour Mills S.A.", "ΚΟΡΔΕ": "Kordellos Bros S.A.", "ΚΡΕΚΑ": "Kre.Ka S.A.", "ΚΡΙ": "Kri-Kri Milk Industry S.A.", "ΚΤΗΛΑ": "Kostas Lazaridis S.A.", "ΛΑΒΙ": "Lavipharm S.A.", "ΛΑΜΔΑ": "Lamda Development S.A.", "ΛΑΝΑΚ": "Lanakam S.A.", "ΛΙΒΑΝ": "Livanis Publishing S.A.", "ΜΑΘΙΟ": "Mathios Refractory S.A.", "ΜΕΒΑ": "Mevaco S.A.", "ΜΕΡΚΟ": "Mermeren Kombinat A.D. Prilep", "ΜΙΓ": "MIG Holdings S.A.", "ΜΙΝ": "Minerva Knitwear S.A.", "ΜΛΣ": "MLS Multimedia S.A.", "ΜΟΗ": "Motor Oil Hellas Refineries S.A.", "ΜΟΝΤΑ": "N. Varveris - Moda Bagno S.A.", "ΜΟΤΟ": "Motodynamics S.A.", "ΜΟΥΖΚ": "El. D. Mouzakis S.A.", "ΜΠΕΛΑ": "Jumbo S.A.", "ΜΠΛΕΚΕΔΡΟΣ": "Mple Kedros REIC", "ΜΥΤΙΛ": "Mytilineos S.A.", "ΝΑΚΑΣ": "Nakas Music S.A.", "ΝΑΥΠ": "Nafpaktos Textile Industry S.A.", "ΟΛΘ": "Thessaloniki Port Authority S.A.", "ΟΛΥΜΠ": "Technical Olympic S.A.", "ΟΡΙΛΙΝΑ": "Orilina Properties REIC", "ΟΤΟΕΛ": "Autohellas S.A.", "ΠΑΙΡ": "E. Pairis S.A.", "ΠΑΠ": "Papoutsanis S.A.", "ΠΕΤΡΟ": "Petros Petropoulos S.A.", "ΠΛΑΚΡ": "Crete Plastics S.A.", "ΠΡΔ": "Proodeftiki Technical Company S.A.", "ΠΡΕΜΙΑ": "Premia REIC", "ΠΡΟΝΤΕΑ": "Prodea REIC S.A.", "ΠΡΟΦ": "Profile Systems & Software S.A.", "ΡΕΒΟΙΛ": "Revoil S.A.", "ΣΑΡ": "Gr. Sarantis S.A.", "ΣΑΤΟΚ": "Sato Office and Houseware Supplies S.A.", "ΣΙΔΜΑ": "Sidma Steel S.A.", "ΤΡΑΣΤΟΡ": "Trastor REIC", "ΤΡΕΣΤΑΤΕΣ": "Trade Estates REIC", "ΥΑΛΚΟ": "Yalco - Constantinou S.A.", "ΦΙΕΡ": "Fieratex S.A.", "ΦΛΕΞΟ": "Flexopack S.A.", "ΦΡΙΓΟ": "Frigoglass S.A.", "ΧΑΙΔΕ": "Haidemenos S.A.", "ΑΡΑΙΓ": "Aegean Airlines", "ΑΤΡΑΣΤ": "Alpha Trust Holdings S.A.", "ΕΠΙΛΚ": "Selected Textile Industries S.A.", "ΕΧΑΕ": "Athens Stock Exchange (ATHEX)", "ΙΝΤΚΑ": "Intracom Holdings S.A.", "ΚΑΡΕΛ": "Karelia Tobacco Company S.A.", "ΚΟΥΑΛ": "Quality and Reliability S.A.", "ΚΟΥΕΣ": "Quest Holdings S.A.", "ΛΑΜΨΑ": "Lampsa Hotel S.A.", "ΛΕΒΚ": "N. Leventeris S.A. (common)", "ΛΕΒΠ": "N. Leventeris S.A. (preferred)", "ΛΟΓΟΣ": "Logismos Information Systems S.A.", "ΛΟΥΛΗ": "Loulis Food Ingredients S.A.", "ΜΕΝΤΙ": "Medicon Hellas S.A.", "ΜΠΡΙΚ": "BriQ Properties REIC", "ΞΥΛΚ": "Interwood-Xylemporia (common)", "ΞΥΛΠ": "Interwood-Xylemporia (preferred)", "ΟΛΠ": "Piraeus Port Authority S.A.", "ΟΤΕ": "Hellenic Telecommunications Organisation (OTE)", "ΠΕΙΡ": "Piraeus Financial Holdings S.A.", "ΠΛΑΘ": "Thrace Plastics Holding S.A.", "ΣΕΝΤΡ": "Centric Holdings S.A.", "ΣΠΕΙΣ": "Space Hellas S.A.", "ΣΠΥΡ": "Spirou Agricultural House S.A.", "ΤΕΝΕΡΓ": "Terna Energy S.A.", "ΦΡΛΚ": "Fourlis Holdings S.A.", "ΔΕΗ": "PPC S.A.", "ΕΛΛ": "Bank of Greece", "ΔΑΑ": "Athens International Airport", "ΠΛΑΙΣ": "Plaisio Computers", "ΙΑΣΩ": "Iaso S.A.", "ΠΕΡΦ": "Performance Technologies", "ΕΥΠΙΚ": "European Reliance", "ΒΙΝΤΑ": "Vidavo S.A.", "ΑΝΕΚ": "ANEK Lines", "ΜΙΝΟΑ": "Minoan Lines", "ΣΠΙ": "CPI Computer Peripherals International", "ΤΖΚΑ": "Pipeworks L. Tzirakian Profil S.A.", "ΚΑΙΡΟΜΕΖ": "Cairo Mezz", "ΝΤΟΤΣΟΦΤ": "Dotsoft", "ΦΑΙΣ": "Fais Group", "ΦΟΥΝΤΛ": "Foodlink", "ΦΒΜΕΖΖ": "Phoenix Vega Mezz", "ΣΑΝΜΕΖΖ": "Sunrisemezz", "ΓΚΜΕΖΖ": "Galaxy Cosmos Mezz"};
+  var SYM_BACK = {}; Object.keys(SYM_EN).forEach(function (k) { SYM_BACK[SYM_EN[k]] = k; });
+  function DS(s) { return (LANG === "en" && SYM_EN[s]) || s; }
   var rows = QUOTE_LINES.map(function (l) {
     var p = l.split(";");
     var price = parseFloat(p[1].replace(",", "."));
     var chg = parseFloat(p[2].replace(/[%\s]/g, "").replace(",", "."));
     var mc = p[3] ? parseFloat(p[3]) : null;
     var vol = p[5] !== undefined && p[5] !== "" ? parseFloat(p[5]) : null;
-    return { sym: p[0], name: NAMES[p[0]] || p[4] || "", price: price, chg: chg, diff: price - price / (1 + chg / 100), prev: price / (1 + chg / 100), mcap: mc, sector: SECMAP[p[0]] || OTHER, vol: vol, lu: p[6] || "" };
+    var nm = NAMES[p[0]] || p[4] || "";
+    if (LANG === "en" && NAME_EN[p[0]] && (!NAMES[p[0]] || HAS_GR.test(NAMES[p[0]]))) nm = NAME_EN[p[0]];
+    return { sym: p[0], dsym: (LANG === "en" && SYM_EN[p[0]]) || p[0], name: nm, price: price, chg: chg, diff: price - price / (1 + chg / 100), prev: price / (1 + chg / 100), mcap: mc, sector: SECMAP[p[0]] || OTHER, vol: vol, lu: p[6] || "" };
   });
   var N = rows.length;
   var HAS_VOL = rows.some(function (r) { return r.vol != null; });
@@ -1144,7 +1151,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   var bigMovers = withCap.filter(function (r) { return r.mcap >= 5e7; }).sort(function (a, b) { return b.chg - a.chg; });
   var byChg = rows.slice().sort(function (a, b) { return b.chg - a.chg; });
   function mrow(s, mode) {
-    return '<button type="button" class="mrow" data-s="' + esc(s.sym) + '">' + monoHtml(s.sym) + '<div class="nm"><b>' + esc(s.sym) + "</b><span>" + esc(s.name || "—") + '</span></div><div class="px num"><div class="price">' + (mode === "cap" ? money(s.mcap) : nf.format(s.price) + " €") + "</div>" + chgHtml(s.chg) + "</div></button>";
+    return '<button type="button" class="mrow" data-s="' + esc(s.sym) + '">' + monoHtml(s.dsym) + '<div class="nm"><b>' + esc(s.dsym) + "</b><span>" + esc(s.name || "—") + '</span></div><div class="px num"><div class="price">' + (mode === "cap" ? money(s.mcap) : nf.format(s.price) + " €") + "</div>" + chgHtml(s.chg) + "</div></button>";
   }
   document.getElementById("gainers").innerHTML = bigMovers.slice(0, 5).map(function (s) { return mrow(s); }).join("");
   document.getElementById("losers").innerHTML = bigMovers.slice(-5).reverse().map(function (s) { return mrow(s); }).join("");
@@ -1215,7 +1222,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   function render() {
     var list = rows.filter(function (r) {
       var okF = state.f === "all" || (state.f === "up" && r.chg > 0.004) || (state.f === "down" && r.chg < -0.004) || (state.f === "flat" && Math.abs(r.chg) <= 0.004) || (state.f === "fav" && favs[r.sym]);
-      return okF && (!state.active || state.f === "fav" || isActive(r)) && (!state.sector || r.sector === state.sector) && (!state.q || r.sym.toLowerCase().indexOf(state.q) > -1 || r.name.toLowerCase().indexOf(state.q) > -1);
+      return okF && (!state.active || state.f === "fav" || isActive(r)) && (!state.sector || r.sector === state.sector) && (!state.q || r.sym.toLowerCase().indexOf(state.q) > -1 || (SYM_EN[r.sym] || "").toLowerCase().indexOf(state.q) > -1 || r.name.toLowerCase().indexOf(state.q) > -1);
     });
     list.sort(function (a, b) {
       var x = a[state.key], y = b[state.key];
@@ -1232,8 +1239,8 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     empty.textContent = state.f === "fav" && !state.q ? "Πάτα ☆ δίπλα σε μια μετοχή για να την προσθέσεις στα αγαπημένα." : "Καμία μετοχή δεν ταιριάζει.";
     var shown = list.slice(0, state.shown);
     document.getElementById("rows").innerHTML = shown.map(function (s, i) {
-      return '<tr tabindex="0" data-s="' + esc(s.sym) + '"><td class="starcol"><button type="button" class="star" data-star="' + esc(s.sym) + '" aria-pressed="' + !!favs[s.sym] + '" aria-label="Αγαπημένο: ' + esc(s.sym) + '">' + (favs[s.sym] ? "★" : "☆") + '</button></td>' +
-        '<td class="l idx num hide-s">' + (s.rank || "—") + '</td><td class="l"><div class="who">' + monoHtml(s.sym) + "<div><b>" + esc(s.sym) + "</b>" + (s.name ? "<span>" + esc(s.name) + "</span>" : "") + "</div></div></td>" +
+      return '<tr tabindex="0" data-s="' + esc(s.sym) + '"><td class="starcol"><button type="button" class="star" data-star="' + esc(s.sym) + '" aria-pressed="' + !!favs[s.sym] + '" aria-label="Αγαπημένο: ' + esc(s.dsym) + '">' + (favs[s.sym] ? "★" : "☆") + '</button></td>' +
+        '<td class="l idx num hide-s">' + (s.rank || "—") + '</td><td class="l"><div class="who">' + monoHtml(s.dsym) + "<div><b>" + esc(s.dsym) + "</b>" + (s.name ? "<span>" + esc(s.name) + "</span>" : "") + "</div></div></td>" +
         '<td class="num price">' + nf.format(s.price) + " €</td><td>" + chgHtml(s.chg) + '</td><td class="hide-s">' + (s.w7 == null ? '<span class="chg flat">—</span>' : chgHtml(s.w7)) + '</td><td class="num hide-s">' + (s.mcap ? money(s.mcap) : "—") + '</td><td class="num hide-s">' + (s.vol == null ? "—" : s.vol ? compactN(s.vol) : '<span style="color:var(--muted)">0</span>') + '</td><td class="mvcell">' + trendCell(s) + "</td></tr>";
     }).join("");
     if (list.length > shown.length) { moreBtn.hidden = false; moreBtn.textContent = "Εμφάνιση περισσότερων (" + (list.length - shown.length) + " ακόμα)"; } else { moreBtn.hidden = true; }
@@ -1314,7 +1321,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     var s = cur, b = barPos(s.chg);
     var rc = byChg.indexOf(s) + 1;
     drawer.innerHTML =
-      '<div class="dh"><div><h2 id="dname">' + esc(s.sym) + (s.name ? " · " + esc(s.name) : "") + '</h2><div class="sec">Χρηματιστήριο Αθηνών</div></div><button type="button" class="close" id="dclose" aria-label="Κλείσιμο">×</button></div>' +
+      '<div class="dh"><div><h2 id="dname">' + esc(s.dsym) + (s.name ? " · " + esc(s.name) : "") + '</h2><div class="sec">Χρηματιστήριο Αθηνών</div></div><button type="button" class="close" id="dclose" aria-label="Κλείσιμο">×</button></div>' +
       '<div class="bigp"><span class="p num">' + nf.format(s.price) + " €</span>" + chgHtml(s.chg) + '<span class="sec" style="color:var(--muted)">σήμερα</span></div>' +
       chartBlock(s) +
       '<dl class="kv num">' + kv("Κλάδος", esc(s.sector)) + kv("Προηγ. κλείσιμο (υπολογισμός)", nf.format(s.prev) + " €") + kv("Μεταβολή", sgn(s.diff) + nf.format(Math.abs(s.diff)) + " €") +
@@ -1658,14 +1665,14 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     if (H.list.length) {
       alloc = '<div class="panel" style="padding:14px 16px"><div class="sechead" style="margin-bottom:10px"><h2>Κατανομή</h2><span class="note">βάρος κάθε μετοχής στην αξία</span></div><div class="alloc" role="img" aria-label="Κατανομή χαρτοφυλακίου">' +
         H.list.map(function (h) { return '<i style="width:' + h.weight + "%;background:hsl(" + hue(h.sym) + ' 55% 55%)"></i>'; }).join("") + '</div><div class="alloclegend">' +
-        H.list.map(function (h) { return '<span><i class="dot" style="background:hsl(' + hue(h.sym) + ' 55% 55%)"></i><b>' + esc(h.sym) + '</b> <span class="num">' + nf2.format(h.weight) + "%</span></span>"; }).join("") + "</div></div>";
+        H.list.map(function (h) { return '<span><i class="dot" style="background:hsl(' + hue(h.sym) + ' 55% 55%)"></i><b>' + esc(DS(h.sym)) + '</b> <span class="num">' + nf2.format(h.weight) + "%</span></span>"; }).join("") + "</div></div>";
     }
     var table = H.list.length ? '<div class="panel tablewrap pf-panel"><h2>Θέσεις</h2><table><thead><tr>' +
       '<th class="l">Μετοχή</th><th class="hide-s">Τιμή</th><th class="hide-s">Ημέρα</th><th>Αξία</th><th class="hide-s">Τεμάχια</th><th class="hide-s">Μέση τιμή αγοράς</th><th>Κ/Ζ</th><th class="hide-s">Βάρος</th>' +
       "</tr></thead><tbody>" +
       H.list.map(function (h) {
         var name = h.row && h.row.name ? "<span>" + esc(h.row.name) + "</span>" : "";
-        return '<tr tabindex="0" data-pfs="' + esc(h.sym) + '"><td class="l"><div class="who">' + monoHtml(h.sym) + "<div><b>" + esc(h.sym) + "</b>" + name + '</div></div></td>' +
+        return '<tr tabindex="0" data-pfs="' + esc(h.sym) + '"><td class="l"><div class="who">' + monoHtml(DS(h.sym)) + "<div><b>" + esc(DS(h.sym)) + "</b>" + name + '</div></div></td>' +
           '<td class="num price hide-s">' + nf.format(h.price) + " €</td><td class=\"hide-s\">" + (h.row ? chgHtml(h.row.chg) : "—") + "</td>" +
           '<td class="num"><div class="price">' + eur(h.value) + '</div></td>' +
           '<td class="num hide-s">' + fmtQty(h.qty) + '</td><td class="num hide-s">' + nf.format(h.avg) + " €</td>" +
@@ -1674,7 +1681,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
       }).join("") + "</tbody></table></div>" : '<div class="panel pempty"><h3>Δεν έχεις ανοιχτές θέσεις</h3><p>Όλες οι μετοχές έχουν πουληθεί. Το πραγματοποιημένο κέρδος ή η ζημιά φαίνεται στη σύνοψη.</p></div>';
     var hist = '<div class="panel tablewrap pf-panel"><h2>Συναλλαγές</h2><table><thead><tr><th class="l hide-s">Ημερομηνία</th><th class="l">Είδος</th><th class="l">Μετοχή</th><th class="hide-s">Τεμάχια</th><th class="hide-s">Τιμή</th><th>Σύνολο</th><th><span style="position:absolute;left:-9999px">Ενέργειες</span></th></tr></thead><tbody>' +
       txns.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0); }).map(function (t) {
-        return '<tr><td class="l num hide-s">' + fmtDate(t.date) + '</td><td class="l"><span class="side ' + (t.side === "sell" ? "sell" : "buy") + '">' + (t.side === "sell" ? "Πώληση" : "Αγορά") + '</span></td><td class="l"><b>' + esc(t.sym) + '</b></td><td class="num hide-s">' + fmtQty(t.qty) + '</td><td class="num hide-s">' + nf.format(t.price) + ' €</td><td class="num">' + eur(t.qty * t.price) + '</td><td><button type="button" class="xbtn" data-del="' + esc(t.id) + '" aria-label="Διαγραφή συναλλαγής ' + esc(t.sym) + " " + fmtDate(t.date) + '">Διαγραφή</button></td></tr>';
+        return '<tr><td class="l num hide-s">' + fmtDate(t.date) + '</td><td class="l"><span class="side ' + (t.side === "sell" ? "sell" : "buy") + '">' + (t.side === "sell" ? "Πώληση" : "Αγορά") + '</span></td><td class="l"><b>' + esc(DS(t.sym)) + '</b></td><td class="num hide-s">' + fmtQty(t.qty) + '</td><td class="num hide-s">' + nf.format(t.price) + ' €</td><td class="num">' + eur(t.qty * t.price) + '</td><td><button type="button" class="xbtn" data-del="' + esc(t.id) + '" aria-label="Διαγραφή συναλλαγής ' + esc(DS(t.sym)) + " " + fmtDate(t.date) + '">Διαγραφή</button></td></tr>';
       }).join("") + "</tbody></table></div>";
     pfBody.innerHTML = stats + alloc + table + hist + '<p class="foot">Το κόστος υπολογίζεται με τη μέση τιμή αγοράς. Οι αξίες υπολογίζονται με τις τιμές της σελίδας (καθυστέρηση 15 λεπτών). Είναι εικονικό χαρτοφυλάκιο για παρακολούθηση, όχι επενδυτική συμβουλή.</p>';
   }
@@ -1705,13 +1712,14 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   var fSym = document.getElementById("pf-sym"), fQty = document.getElementById("pf-qty"), fPrice = document.getElementById("pf-price"), fDate = document.getElementById("pf-date"), fTotal = document.getElementById("pf-total"), fErr = document.getElementById("pf-err");
   var side = "buy";
   document.getElementById("pf-syms").innerHTML = rows.slice().sort(function (a, b) { return a.sym.localeCompare(b.sym, "el"); }).map(function (r) {
-    return '<option value="' + esc(r.sym) + (r.name ? " — " + esc(r.name) : "") + '"></option>';
+    return '<option value="' + esc(r.dsym) + (r.name ? " — " + esc(r.name) : "") + '"></option>';
   }).join("");
   function today() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function num(v) { v = String(v || "").trim().replace(/\s/g, ""); if (LANG === "en") { v = v.replace(/,/g, ""); return /^-?\d*\.?\d+$/.test(v) ? parseFloat(v) : NaN; } if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g, ""); v = v.replace(",", "."); var n = parseFloat(v); return /^-?\d*\.?\d+$/.test(v) ? n : NaN; }
   function findSym(v) {
     v = String(v || "").split(" — ")[0].trim().toUpperCase();
     if (BYSYM[v]) return BYSYM[v];
+    if (SYM_BACK[v] && BYSYM[SYM_BACK[v]]) return BYSYM[SYM_BACK[v]];
     var low = v.toLowerCase();
     var hit = rows.filter(function (r) { return r.name && r.name.toLowerCase() === low; })[0];
     return hit || null;
@@ -1732,7 +1740,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   function openForm(sym, s) {
     form.hidden = false; fErr.textContent = "";
     var r = sym ? BYSYM[sym] : null;
-    fSym.value = r ? r.sym + (r.name ? " — " + r.name : "") : "";
+    fSym.value = r ? r.dsym + (r.name ? " — " + r.name : "") : "";
     fQty.value = ""; fPrice.value = r ? (LANG === "en" ? String(r.price) : String(r.price).replace(".", ",")) : ""; fDate.value = today();
     setSide(s || "buy");
     (r ? fQty : fSym).focus();
@@ -1744,7 +1752,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   form.querySelector(".seg").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) setSide(b.getAttribute("data-side")); });
   fSym.addEventListener("change", function () {
     var r = findSym(fSym.value);
-    if (r) { fSym.value = r.sym + (r.name ? " — " + r.name : ""); if (!fPrice.value) fPrice.value = (LANG === "en" ? String(r.price) : String(r.price).replace(".", ",")); }
+    if (r) { fSym.value = r.dsym + (r.name ? " — " + r.name : ""); if (!fPrice.value) fPrice.value = (LANG === "en" ? String(r.price) : String(r.price).replace(".", ",")); }
     updTotal();
   });
   [fQty, fPrice].forEach(function (i) { i.addEventListener("input", updTotal); });
@@ -1756,11 +1764,11 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     if (!(p > 0)) { fErr.textContent = "Γράψε την τιμή ανά μετοχή, π.χ. 12,50."; fPrice.focus(); return; }
     if (side === "sell") {
       var held = heldQty(r.sym);
-      if (q > held + 1e-9) { fErr.textContent = held ? "Έχεις μόνο " + fmtQty(held) + " τεμάχια " + r.sym + "." : "Δεν έχεις τεμάχια " + r.sym + " για πώληση."; fQty.focus(); return; }
+      if (q > held + 1e-9) { fErr.textContent = held ? "Έχεις μόνο " + fmtQty(held) + " τεμάχια " + r.dsym + "." : "Δεν έχεις τεμάχια " + r.dsym + " για πώληση."; fQty.focus(); return; }
     }
     txns.push({ id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), side: side, sym: r.sym, qty: q, price: p, date: d, ts: Date.now() });
     renderPortfolio(); persist();
-    toast((side === "sell" ? "Καταχωρήθηκε πώληση " : "Καταχωρήθηκε αγορά ") + fmtQty(q) + " " + r.sym);
+    toast((side === "sell" ? "Καταχωρήθηκε πώληση " : "Καταχωρήθηκε αγορά ") + fmtQty(q) + " " + r.dsym);
     form.hidden = true;
     document.getElementById("pf-add").focus();
   });
