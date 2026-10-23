@@ -1,0 +1,28 @@
+name: Διάγνωση πηγών (προσωρινό)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Λήψη σελίδων πηγής
+        run: |
+          mkdir out && cd out
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          curl -sSL -A "$UA" -H "Accept-Language: el-GR,el;q=0.9" -D capital.headers -o capital.html -w "capital %{http_code} %{size_download}\n" https://www.capital.gr/finance/allstocks || true
+          curl -sSL -A "$UA" -H "Accept-Language: el-GR,el;q=0.9" -D euro2day.headers -o euro2day.html -w "euro2day %{http_code} %{size_download}\n" https://www.euro2day.gr/AseQuotesCapitalization.aspx || true
+          ls -la
+      - name: Αποθήκευση στο branch debug
+        run: |
+          cd out
+          git init -q -b debug
+          git config user.name "price-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "debug fetch"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" debug
