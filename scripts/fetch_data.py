@@ -43,6 +43,7 @@ ALIAS = {
     "REALCONS": "REALCO", "ΤΡΑΣΤΟΡ": "ΤΡΑΣΤΟ", "ΤΡΕΣΤΑΤΕΣ": "ΤΡΕΣΤΑ",
     "ΜΠΛΕΚΕΔΡΟΣ": "ΜΠΛΕΚΕ", "ΟΡΙΛΙΝΑ": "ΟΡΙΛΙΝ", "ΝΤΟΤΣΟΦΤ": "ΝΤΟΤΣΟ",
     "ΚΑΙΡΟΜΕΖ": "ΚΑΙΡΟΜ", "ΣΑΝΜΕΖΖ": "ΣΑΝΜΕΖ",
+    "ΜΑΣΤΙΧΑ": "ΜΑΣΤΙΧ", "ΝΤΟΠΛΕΡ": "ΝΤΟΠΛΕ",
 }
 
 SYM_RE = re.compile(r"^[A-ZΑ-Ω0-9][A-ZΑ-Ω0-9.\-&/]{0,11}$")
@@ -50,6 +51,7 @@ PRICE_RE = re.compile(r"^\d{1,3}(?:\.\d{3})*,\d{1,6}$")
 PCT_RE = re.compile(r"^[-+−]?\d{1,3},\d{1,4}\s*%$")
 CAP_RE = re.compile(r"^\d{1,3}(?:\.\d{3})+,\d{2}$")
 INT_RE = re.compile(r"^\d{1,4}$")
+NUM_RE = re.compile(r"^[-+−]?\d{1,3},\d{1,4}$")
 
 
 def gr_num(s):
@@ -75,20 +77,38 @@ def tokens(html):
 
 
 def parse_capital(html):
-    """Βρίσκει τριάδες: ΣΥΜΒΟΛΟ, ΤΙΜΗ, ΜΕΤΑΒΟΛΗ %."""
+    """Βρίσκει: ΣΥΜΒΟΛΟ, ΤΙΜΗ, ΜΕΤΑΒΟΛΗ, «%» (το % μπορεί να είναι
+    χωριστό στοιχείο ή κολλημένο στη μεταβολή)."""
     tok = tokens(html)
-    # Ξεκινάμε από την επικεφαλίδα του κύριου πίνακα (ΣΥΜΒ.), ώστε να μη
-    # διαβαστούν οι δείκτες της πάνω μπάρας (π.χ. Γενικός Δείκτης) ως μετοχές.
-    for i, t in enumerate(tok):
-        if t.upper().startswith("ΣΥΜΒ"):
-            tok = tok[i:]
+    # Ξεκινάμε από την επικεφαλίδα του κύριου πίνακα (… ΤΙΜΗ, ΜΕΤ.%), ώστε να
+    # μη διαβαστούν οι δείκτες της πάνω μπάρας ως μετοχές, και σταματάμε στον
+    # πίνακα «ΑΝΟΔΙΚΕΣ / ΠΤΩΤΙΚΕΣ ΜΕΤΟΧΕΣ».
+    start = 0
+    for i in range(len(tok) - 1):
+        if tok[i].upper() == "ΤΙΜΗ" and tok[i + 1].upper().startswith("ΜΕΤ"):
+            start = i + 2
             break
+    end = len(tok)
+    for i in range(start, len(tok)):
+        if "ΑΝΟΔΙΚΕΣ" in tok[i].upper():
+            end = i
+            break
+    tok = tok[start:end]
     out = {}
-    for i in range(len(tok) - 2):
+    i = 0
+    while i < len(tok) - 2:
         a, b, c = tok[i], tok[i + 1], tok[i + 2]
-        if SYM_RE.match(a) and PRICE_RE.match(b) and PCT_RE.match(c):
-            if a not in out:
-                out[a] = {"price": gr_num(b), "chg": gr_num(c)}
+        d = tok[i + 3] if i + 3 < len(tok) else ""
+        if SYM_RE.match(a) and PRICE_RE.match(b):
+            if PCT_RE.match(c):
+                out.setdefault(a, {"price": gr_num(b), "chg": gr_num(c)})
+                i += 3
+                continue
+            if NUM_RE.match(c) and d == "%":
+                out.setdefault(a, {"price": gr_num(b), "chg": gr_num(c)})
+                i += 4
+                continue
+        i += 1
     return out
 
 
