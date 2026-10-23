@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Τιμές, μεταβολές και κεφαλαιοποίηση μετοχών του Χρηματιστηρίου Αθηνών, με κλάδους και εικονικό χαρτοφυλάκιο.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2a3040">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Αγορά Αθηνών">
 <style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -285,6 +293,7 @@ button.acct:hover { border-color: var(--accent); }
     </div>
     <div class="topright">
       <div class="toprow">
+        <button type="button" class="langbtn" id="installbtn" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg><span>Εφαρμογή</span></button>
         <button type="button" class="langbtn" id="langbtn">EN</button>
         <div class="acct" id="acct" aria-live="polite"><span class="ic" aria-hidden="true">?</span><span class="as">Έλεγχος λογαριασμού…</span></div>
       </div>
@@ -394,6 +403,17 @@ button.acct:hover { border-color: var(--accent); }
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="scrim" id="authScrim" hidden></div>
 <div class="panel authbox" id="authBox" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden></div>
+<div class="scrim" id="appScrim" hidden></div>
+<div class="panel authbox" id="appBox" role="dialog" aria-modal="true" aria-labelledby="appTitle" hidden>
+  <div class="ahead"><h2 id="appTitle">Εγκατάσταση εφαρμογής</h2><button type="button" class="close" id="appClose" aria-label="Κλείσιμο">×</button></div>
+  <p class="note" style="margin:0">Βάλε την Αγορά Αθηνών στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.</p>
+  <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;line-height:1.5">
+    <li>Άνοιξε τη σελίδα στο Safari.</li>
+    <li>Πάτα το κουμπί «Κοινοποίηση» (τετράγωνο με βέλος προς τα πάνω) στο κάτω μέρος της οθόνης.</li>
+    <li>Διάλεξε «Προσθήκη στην οθόνη Αφετηρίας» και πάτα «Προσθήκη».</li>
+  </ol>
+  <button type="button" class="btn primary block" id="appOk">Εντάξει</button>
+</div>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dname" hidden></aside>
@@ -899,7 +919,15 @@ var EN_EXACT = {
   "Χαϊδεμένος": "Haidemenos",
   "Μπλε Κέδρος": "Mple Kedros",
   "Πετρόπουλος": "Petropoulos",
-  "Allwyn (πρώην ΟΠΑΠ)": "Allwyn (formerly OPAP)"
+  "Allwyn (πρώην ΟΠΑΠ)": "Allwyn (formerly OPAP)",
+  "Εφαρμογή": "App",
+  "Εγκατάσταση εφαρμογής": "Install the app",
+  "Βάλε την Αγορά Αθηνών στην αρχική οθόνη του κινητού σου. Θα ανοίγει σαν εφαρμογή, σε δικό της παράθυρο.": "Put Athens Market on your phone's home screen. It opens like an app, in its own window.",
+  "Άνοιξε τη σελίδα στο Safari.": "Open this page in Safari.",
+  "Πάτα το κουμπί «Κοινοποίηση» (τετράγωνο με βέλος προς τα πάνω) στο κάτω μέρος της οθόνης.": "Tap the Share button (a square with an arrow pointing up) at the bottom of the screen.",
+  "Διάλεξε «Προσθήκη στην οθόνη Αφετηρίας» και πάτα «Προσθήκη».": "Choose “Add to Home Screen” and tap “Add”.",
+  "Εντάξει": "OK",
+  "Η εφαρμογή εγκαταστάθηκε": "The app was installed"
 };
 var EN_RX = [
   [/^Ενημέρωση: (.+)$/, "Updated: $1"],
@@ -989,6 +1017,7 @@ if (LANG === "en") {
     });
   }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
 }
+window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; document.dispatchEvent(new Event("agora-bip")); });
 (function () {
   var b = document.getElementById("langbtn");
   if (!b) return;
@@ -1789,6 +1818,32 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   setStorageNote();
   renderPortfolio();
   if (location.hash === "#portfolio") showView("portfolio");
+
+  /* εφαρμογή: εγκατάσταση και λειτουργία χωρίς internet (μόνο στο δημόσιο site) */
+  (function () {
+    var btn = document.getElementById("installbtn"), box = document.getElementById("appBox"), scr = document.getElementById("appScrim");
+    if (!btn || window.claude || !FIREBASE_CONFIG) return;
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+    var standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
+    if (standalone) return;
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    function show() { btn.hidden = false; }
+    if (window.__bip || ios) show();
+    document.addEventListener("agora-bip", show);
+    function closeBox() { box.hidden = true; scr.hidden = true; btn.focus(); }
+    btn.addEventListener("click", function () {
+      var p = window.__bip;
+      if (p) {
+        p.prompt();
+        p.userChoice.then(function (c) { if (c && c.outcome === "accepted") btn.hidden = true; window.__bip = null; }).catch(function () {});
+      } else { box.hidden = false; scr.hidden = false; document.getElementById("appOk").focus(); }
+    });
+    document.getElementById("appClose").addEventListener("click", closeBox);
+    document.getElementById("appOk").addEventListener("click", closeBox);
+    scr.addEventListener("click", closeBox);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) closeBox(); });
+    window.addEventListener("appinstalled", function () { btn.hidden = true; toast("Η εφαρμογή εγκαταστάθηκε"); });
+  })();
 
   function athensNow() {
     try {
