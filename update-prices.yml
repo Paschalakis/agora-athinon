@@ -1,0 +1,54 @@
+name: Ενημέρωση τιμών
+
+on:
+  # Κάθε 15 λεπτά, Δευτέρα-Παρασκευή, 07:00-15:59 UTC.
+  # Καλύπτει τη συνεδρίαση του Χρηματιστηρίου Αθηνών (10:15-17:20 ώρα Ελλάδας)
+  # και με θερινή και με χειμερινή ώρα.
+  schedule:
+    - cron: "*/15 7-15 * * 1-5"
+  # Κουμπί «Run workflow» για χειροκίνητη εκτέλεση
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Εγκατάσταση βιβλιοθηκών
+        run: pip install requests beautifulsoup4
+
+      - name: Λήψη τιμών
+        run: python scripts/fetch_data.py
+
+      - name: Αποθήκευση data.json
+        run: |
+          git config user.name "price-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          if git diff --cached --quiet; then
+            echo "Καμία αλλαγή στις τιμές."
+          else
+            git commit -m "Ενημέρωση τιμών $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push
+          fi
+
+      - name: Αρχεία διάγνωσης (μόνο αν αποτύχει)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-html
+          path: debug/
+          if-no-files-found: ignore

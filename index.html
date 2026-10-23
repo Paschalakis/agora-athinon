@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Τιμές, μεταβολές και κεφαλαιοποίηση μετοχών του Χρηματιστηρίου Αθηνών, με κλάδους και εικονικό χαρτοφυλάκιο.">
+<style>:root{color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Αγορά Αθηνών</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky top bar, summary strip, two mover lists, then a sortable market table; stock detail opens in a right-hand drawer (bottom sheet on phones). */
+:root {
+  --bg: #23272e;
+  --surface: #2b3038;
+  --fg: #e7eaef;
+  --muted: #a3abb8;
+  --line: #3b414c;
+  --accent: #8fb0ff;
+  --accent-soft: #343d52;
+  --up: #4fd69a;
+  --up-soft: #1f3a31;
+  --down: #ff7b7b;
+  --down-soft: #442a2e;
+  --warn-bg: #4a3f1d;
+  --warn-fg: #f3dc94;
+  --shadow: 0 10px 40px rgba(0, 0, 0, .5);
+  --font-display: "Commissioner", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 40px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.demo { background: var(--warn-bg); color: var(--warn-fg); padding: 8px 0; }
+.demo p { max-width: 1120px; margin: 0 auto; font-size: 13px; }
+.demo-band { margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+
+header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 22px; }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+.pill { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.asof { color: var(--muted); font-size: 13px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.stat .lbl { color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.stat .val { font-family: var(--font-display); font-weight: 700; font-size: 22px; margin-top: 4px; overflow-wrap: anywhere; }
+.stat .sub { font-size: 13px; margin-top: 2px; }
+
+.movers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
+.panel > h2 { font-size: 15px; font-weight: 700; padding: 14px 16px 6px; }
+.mrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 16px; background: none; border: 0; border-top: 1px solid var(--line); text-align: left; cursor: pointer; }
+.mrow:hover { background: var(--bg); }
+.mrow .nm { flex: 1; min-width: 0; }
+.mrow .nm b { display: block; font-weight: 600; }
+.mrow .nm span { display: block; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow .px { text-align: right; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #1b1f26; }
+.search { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 8px 12px; font: inherit; width: 240px; max-width: 100%; }
+.search::placeholder { color: var(--muted); }
+
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
+th, td { padding: 12px 14px; text-align: right; white-space: nowrap; border-top: 1px solid var(--line); }
+th { border-top: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .03em; padding-block: 12px; }
+th.l, td.l { text-align: left; }
+th button { background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font-weight: inherit; letter-spacing: inherit; font-size: inherit; }
+th button:hover { color: var(--fg); }
+th[aria-sort="ascending"] button::after { content: " ↑"; }
+th[aria-sort="descending"] button::after { content: " ↓"; }
+th[aria-sort] button { color: var(--fg); }
+tbody tr { cursor: default; }
+tbody tr:hover { background: var(--bg); }
+.idx { color: var(--muted); width: 36px; }
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mono { flex: none; width: 34px; height: 34px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; }
+.who b { display: block; font-weight: 600; }
+.who span { display: block; color: var(--muted); font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.price { font-weight: 600; }
+.chg { font-weight: 600; }
+.chg.up { color: var(--up); } .chg.down { color: var(--down); } .chg.flat { color: var(--muted); }
+.spark { display: block; margin-left: auto; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.foot { color: var(--muted); font-size: 12px; max-width: 70ch; }
+
+/* drawer */
+.scrim { position: fixed; inset: 0; background: rgba(8, 14, 28, .5); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100%); background: var(--surface); z-index: 21; box-shadow: var(--shadow); overflow-y: auto;
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) 20px; display: flex; flex-direction: column; gap: 16px; }
+.dh { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dh h2 { font-size: 22px; font-weight: 800; }
+.dh .sec { color: var(--muted); font-size: 13px; }
+.close { border: 1px solid var(--line); background: var(--surface); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1; flex: none; }
+.bigp { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.bigp .p { font-family: var(--font-display); font-weight: 800; font-size: 34px; }
+.readout { color: var(--muted); font-size: 13px; min-height: 20px; }
+.chartbox { position: relative; }
+.chartbox svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chartbox text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.kv { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; margin: 0; }
+.kv div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); min-width: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-weight: 600; text-align: right; }
+
+@media (max-width: 760px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .movers { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .brand h1 { font-size: 22px; }
+  .hide-s { display: none; }
+  table { min-width: 0; }
+  th, td { padding-inline: 10px; }
+  .who span { max-width: 120px; }
+  .drawer { top: auto; width: 100%; max-height: 92%; border-radius: 16px 16px 0 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .search { width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .drawer { animation: slide .18s ease-out; }
+  @keyframes slide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+}
+</style>
+<style>
+.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat.wide { grid-column: span 2; }
+.breadth { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--line); margin: 10px 0 6px; }
+.breadth i { display: block; height: 100%; }
+.breadth .u { background: var(--up); } .breadth .f { background: var(--muted); opacity: .5; } .breadth .d { background: var(--down); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.movers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.star { background: none; border: 0; padding: 4px; cursor: pointer; color: var(--muted); font-size: 17px; line-height: 1; border-radius: 6px; }
+.star[aria-pressed="true"] { color: #f1c24b; }
+.star:hover { color: var(--fg); }
+.starcol { width: 40px; padding-right: 0; }
+.mvcell { width: 150px; }
+.mv { position: relative; height: 8px; width: 120px; margin-left: auto; background: var(--line); border-radius: 999px; overflow: hidden; }
+.mv::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--muted); opacity: .6; }
+.mv i { position: absolute; top: 0; bottom: 0; }
+.mv i.up { background: var(--up); } .mv i.down { background: var(--down); }
+.more { align-self: center; border: 1px solid var(--line); background: var(--surface); padding: 9px 20px; border-radius: 999px; cursor: pointer; font-weight: 500; }
+.more:hover { border-color: var(--accent); color: var(--accent); }
+.gauge { position: relative; height: 12px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.gauge::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--muted); opacity: .7; }
+.gauge i { position: absolute; top: 0; bottom: 0; }
+.gauge i.up { background: var(--up); } .gauge i.down { background: var(--down); }
+.gl { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; margin-top: 4px; }
+.note { color: var(--muted); font-size: 12.5px; }
+.favbtn { align-self: flex-start; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.favbtn[aria-pressed="true"] { border-color: #f1c24b; }
+@media (max-width: 900px) { .movers { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .stat.wide { grid-column: span 2; } }
+@media (max-width: 640px) { .mvcell { display: none; } }
+.sechead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.sechead h2 { font-size: 15px; font-weight: 700; }
+.sectors { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 8px; }
+.secchip { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; cursor: pointer; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.secchip:hover { border-color: var(--accent); }
+.secchip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.secchip b { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+.secchip span { font-size: 12px; color: var(--muted); }
+.secchip .chg { font-size: 13px; }
+@media (max-width: 640px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat.wide { grid-column: 1 / -1; }
+  .stat .val { font-size: 19px; }
+  .starcol { display: none; }
+  th, td { padding-inline: 8px; }
+  .who { gap: 8px; }
+  .who span { max-width: 96px; white-space: nowrap; }
+  .mono { width: 30px; height: 30px; font-size: 12px; }
+  .kv { grid-template-columns: minmax(0, 1fr); }
+  .sectors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.views { display: flex; gap: 6px; border-bottom: 1px solid var(--line); }
+.viewbtn { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 4px; margin-right: 14px; cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--muted); }
+.viewbtn[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.viewbtn:hover { color: var(--fg); }
+.view { display: flex; flex-direction: column; gap: 20px; }
+.phead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.phead h2 { font-size: 20px; font-weight: 800; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 9px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #1b1f26; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--down); }
+.storage { font-size: 12.5px; color: var(--muted); }
+.alloc { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--line); }
+.alloc i { display: block; height: 100%; }
+.alloclegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.alloclegend span { display: inline-flex; align-items: center; gap: 6px; }
+.alloclegend b { color: var(--fg); font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+.pform { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 14px; padding: 16px; }
+.pform .full { grid-column: 1 / -1; }
+.pform label { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); min-width: 0; }
+.pform input { border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 9px 11px; font: inherit; font-size: 14px; width: 100%; min-width: 0; }
+.pform input:focus { border-color: var(--accent); outline: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; align-self: flex-start; }
+.seg button { border: 0; background: var(--surface); color: var(--muted); padding: 8px 16px; cursor: pointer; font-weight: 600; }
+.seg button[aria-pressed="true"][data-side="buy"] { background: var(--up-soft); color: var(--up); }
+.seg button[aria-pressed="true"][data-side="sell"] { background: var(--down-soft); color: var(--down); }
+.formfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.formerr { color: var(--down); font-size: 13px; min-height: 18px; }
+.total { font-size: 13px; color: var(--muted); }
+.total b { color: var(--fg); }
+.pempty { padding: 36px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.pempty h3 { font-size: 17px; }
+.pempty p { color: var(--muted); margin: 0; max-width: 46ch; }
+.side { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; }
+.side.buy { background: var(--up-soft); color: var(--up); }
+.side.sell { background: var(--down-soft); color: var(--down); }
+.xbtn { background: none; border: 1px solid transparent; color: var(--muted); cursor: pointer; border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+.xbtn:hover { border-color: var(--line); color: var(--down); }
+.acct { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px 4px 4px; font-size: 13px; max-width: 100%; }
+.acct img { width: 28px; height: 28px; border-radius: 50%; flex: none; object-fit: cover; }
+.acct .an { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.acct .as { color: var(--muted); font-size: 12px; }
+.acct .ic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; flex: none; }
+.topright { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+@media (max-width: 640px) { .topright { align-items: flex-start; } }
+#pf-body { display: flex; flex-direction: column; gap: 20px; }
+.pf-panel > h2 { font-size: 15px; font-weight: 700; padding: 14px 16px 6px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 500; z-index: 30; max-width: calc(100% - 32px); }
+@media (max-width: 760px) { .pform { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .phead h2 { font-size: 18px; } }
+</style>
+
+<div class="demo demo-band"><p><strong>Στιγμιότυπο.</strong> Οι τιμές προέρχονται από το capital.gr (καθυστέρηση 15 λεπτών) και η κεφαλαιοποίηση με τα ονόματα από το euro2day.gr (ώρα σελίδας 10:58, 23/10/2026). Τα στοιχεία δεν ενημερώνονται αυτόματα και δεν αποτελούν επενδυτική πληροφόρηση.</p></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Αγορά Αθηνών</h1>
+      <span class="pill">Στιγμιότυπο</span>
+    </div>
+    <div class="topright">
+      <div class="acct" id="acct" aria-live="polite"><span class="ic" aria-hidden="true">?</span><span class="as">Έλεγχος λογαριασμού…</span></div>
+      <div class="asof">Πηγές: capital.gr, euro2day.gr</div>
+    </div>
+  </header>
+
+  <nav class="views" role="tablist" aria-label="Ενότητες">
+    <button type="button" class="viewbtn" role="tab" id="tab-market" data-view="market" aria-selected="true" aria-controls="view-market">Αγορά</button>
+    <button type="button" class="viewbtn" role="tab" id="tab-portfolio" data-view="portfolio" aria-selected="false" aria-controls="view-portfolio">Χαρτοφυλάκιο</button>
+  </nav>
+
+  <div class="view" id="view-market" role="tabpanel" aria-labelledby="tab-market">
+  <section class="stats" aria-label="Σύνοψη αγοράς" id="stats"></section>
+
+  <section class="movers" aria-label="Κορυφαίες κινήσεις">
+    <div class="panel"><h2>Κορυφαίες άνοδοι (αξία από 50 εκ. €)</h2><div id="gainers"></div></div>
+    <div class="panel"><h2>Κορυφαίες πτώσεις (αξία από 50 εκ. €)</h2><div id="losers"></div></div>
+    <div class="panel"><h2>Μεγαλύτερες εταιρείες</h2><div id="biggest"></div></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:10px" aria-label="Κλάδοι">
+    <div class="sechead"><h2>Κλάδοι</h2><span class="note">Η κατηγοριοποίηση είναι δική μου και όχι η επίσημη του ATHEX.</span></div>
+    <div class="sectors" id="sectors"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px" aria-label="Όλες οι μετοχές">
+    <div class="controls">
+      <div class="tabs" id="tabs" role="group" aria-label="Φίλτρο κίνησης"></div>
+      <input class="search" id="q" type="search" placeholder="Αναζήτηση συμβόλου ή ονόματος" aria-label="Αναζήτηση συμβόλου ή ονόματος" autocomplete="off">
+    </div>
+    <div class="panel tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="starcol"><span class="sr" style="position:absolute;left:-9999px">Αγαπημένα</span></th>
+            <th class="l idx hide-s">#</th>
+            <th class="l" data-k="sym" aria-sort="none"><button type="button">Μετοχή</button></th>
+            <th data-k="price"><button type="button">Τιμή</button></th>
+            <th data-k="chg"><button type="button">Ημέρα %</button></th>
+            <th data-k="diff" class="hide-s"><button type="button">Ημέρα €</button></th>
+            <th data-k="mcap" class="hide-s"><button type="button">Κεφαλαιοποίηση</button></th>
+            <th class="mvcell">Κίνηση −10% έως +10%</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden>Καμία μετοχή δεν ταιριάζει.</div>
+    </div>
+    <button type="button" class="more" id="more" hidden></button>
+    <p class="foot">Η μεταβολή € υπολογίζεται από την τιμή και τη μεταβολή %. Η λίστα περιλαμβάνει και μετοχές με μηδενική κίνηση, χαμηλής εμπορευσιμότητας ή σε αναστολή. Η κεφαλαιοποίηση υπάρχει για τις 124 μεγαλύτερες εταιρείες της λίστας του euro2day και λείπει (—) από τις υπόλοιπες. Δεν υπάρχουν όγκος και ιστορικό τιμών στις πηγές, γι' αυτό δεν εμφανίζονται. Έλεγξε τιμές στις πηγές πριν στηριχτείς σε αυτές.</p>
+  </section>
+  </div>
+
+  <div class="view" id="view-portfolio" role="tabpanel" aria-labelledby="tab-portfolio" hidden>
+    <div class="phead">
+      <div>
+        <h2>Το χαρτοφυλάκιό μου</h2>
+        <div class="storage" id="pf-storage">Οι καταχωρήσεις αποθηκεύονται σε αυτόν τον browser.</div>
+      </div>
+      <button type="button" class="btn primary" id="pf-add">+ Προσθήκη συναλλαγής</button>
+    </div>
+
+    <form class="panel" id="pf-form" hidden novalidate>
+      <div class="pform">
+        <div class="full" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
+          <div class="seg" role="group" aria-label="Είδος συναλλαγής">
+            <button type="button" data-side="buy" aria-pressed="true">Αγορά</button>
+            <button type="button" data-side="sell" aria-pressed="false">Πώληση</button>
+          </div>
+          <span class="note">Εικονικές συναλλαγές, χωρίς χρήματα.</span>
+        </div>
+        <label class="full">Μετοχή
+          <input id="pf-sym" list="pf-syms" autocomplete="off" placeholder="Γράψε σύμβολο ή όνομα, π.χ. ΕΤΕ">
+        </label>
+        <label>Τεμάχια
+          <input id="pf-qty" inputmode="decimal" autocomplete="off" placeholder="π.χ. 100">
+        </label>
+        <label>Τιμή ανά μετοχή (€)
+          <input id="pf-price" inputmode="decimal" autocomplete="off" placeholder="τρέχουσα τιμή">
+        </label>
+        <label>Ημερομηνία
+          <input id="pf-date" type="date">
+        </label>
+        <label>Σύνολο
+          <input id="pf-total" readonly tabindex="-1" aria-live="polite">
+        </label>
+        <div class="full formfoot">
+          <div class="formerr" id="pf-err" role="alert"></div>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn" id="pf-cancel">Άκυρο</button>
+            <button type="submit" class="btn primary" id="pf-submit">Καταχώρηση αγοράς</button>
+          </div>
+        </div>
+      </div>
+      <datalist id="pf-syms"></datalist>
+    </form>
+
+    <div id="pf-body"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dname" hidden></aside>
+
+<script type="text/plain" id="quotes">
+ACAG;9.8100;0.00;356631445.08;AUSTRIACARD
+ADPS;2.8250;-0.70;170257328.00;ΑΤΤΙΚΑ ΠΟΛΥΚΑΤΑΣΤΗΜΑΤΑ
+AEM;6.4900;-0.15;375215061.78;ALTER EGO MEDIA
+AKTR;9.9500;-1.09;2591624385.90;ΑΚTOR ΣΥΜΜΕΤΟΧΩΝ
+ALWN;11.6950;-1.76;9600711428.70;Allwyn AG
+BOCHGR;10.2300;-2.39;4390140411.35;BANK OF CYPRUS
+BYLOT;1.1260;-0.35;2075128793.03;BALLYS INTRALOT
+CENER;21.8400;-1.89;4651229375.70;CENERGY HOLDINGS
+CMFC;7.7490;0.62;1078140000.00;CAPITAL MARITIME
+CNLCAP;7.7000;0.00;;
+CREDIA;0.9460;-2.37;1881881757.75;CrediaBank
+DIMAND;13.9000;-1.42;258722155.00;DIMAND
+EIS;1.7840;-0.34;26959420.40;E.IN.S.
+EVR;1.3620;-2.01;190811416.90;ΕΥΡΩΠΗ HOLDINGS Α.Ε.
+MTLN;48.2000;-1.03;6878722662.24;METLEN PLC
+NOVAL;2.2900;-0.87;290793503.40;ΝΟΒΑΛ ΠΡΟΠΕΡΤΥ
+ONYX;1.5500;-0.64;106147270.46;ΟΝΥΞ ΤΟΥΡΙΣΤΙΚΗ
+OPTIMA;13.3800;-3.53;2848419622.62;OPTIMA BANK
+QLCO;6.0000;-1.32;418077929.88;QUALCO GROUP Α.Ε.
+REALCO;8.5000;-1.16;259754351.04;REAL CONSULTING
+SB;7.0700;-0.84;800286053.97;Safe Bulkers, Inc.
+SBLK;25.6000;-1.65;2964463198.44;Star Bulk
+TITC;46.9800;-0.68;3665632230.00;TITAN S.A.
+TREK;3.7700;-1.05;30044300.00;TREK DEVELOPMENT Α.Ε.
+VRLS;1.4682;-5.84;;
+YKNOT;1.3700;1.48;50128056.00;Y/KNOT
+ΑΑΑΚ;4.7800;0.00;;
+ΑΑΑΠ;9.0000;0.00;;
+ΑΒΑΞ;3.2750;-2.24;485752964.90;ΑΒΑΞ
+ΑΒΕ;0.4610;0.66;80171011.35;AVE
+ΑΒΕΝΙΡ;0.0460;0.00;;
+ΑΓΚΡΙ;0.0140;0.00;;
+ΑΔΜΗΕ;4.2600;-1.39;1504072096.57;ΑΔΜΗΕ ΣΥΜΜΕΤΟΧΩΝ
+ΑΕΓΕΚ;0.0350;0.00;;
+ΑΘΗΝΑ;0.6400;0.00;;
+ΑΚΡΙΤ;1.0800;0.00;;
+ΑΛΚΑΤ;1.6000;0.00;;
+ΑΛΚΟ;0.1800;0.00;;
+ΑΛΜΥ;5.2600;-0.75;168875278.01;ΑΛΟΥΜΥΛ
+ΑΛΣΙΝ;0.0430;0.00;;
+ΑΛΤΕΚ;0.0120;0.00;;
+ΑΛΦΑ;4.3600;-3.22;9436196277.93;ALPHA ΤΡΑΠΕΖΑ
+ΑΝΔΡΟ;8.1000;0.50;30411709.20;ΑΝΔΡΟΜΕΔΑ
+ΑΝΕΚ;0.2740;0.00;;
+ΑΝΕΜΟΣ;2.5700;0.00;;
+ΑΝΕΠ;0.0720;0.00;;
+ΑΝΕΠΟ;0.3000;0.00;;
+ΑΡΑΙΓ;10.9000;-0.91;973804680.00;ΑΕΡΟΠΟΡΙΑ ΑΙΓΑΙΟΥ
+ΑΣΚΟ;4.3400;-1.36;57032556.90;AS COMPANY
+ΑΣΤΑΚ;7.0000;0.72;98000000.00;ALPHA REAL ESTATE
+ΑΣΤΗΡ;5.4800;0.00;;
+ΑΤΕ;0.1550;0.00;;
+ΑΤΕΚ;1.0300;0.00;15759000.00;ΑΤΤΙΚΕΣ ΕΚΔΟΣΕΙΣ
+ΑΤΕΡΜ;0.1200;0.00;;
+ΑΤΡΑΣΤ;20.2000;0.00;;
+ΑΤΤΙΚ;0.0120;0.00;;
+ΑΤΤΙΚΑ;1.3600;-2.16;330703302.48;ATTICA ΣΥΜΜΕΤΟΧΩΝ
+ΑΧΟΝ;0.0580;0.00;;
+ΒΑΛΚ;0.1900;0.00;;
+ΒΑΡΓ;0.1100;0.00;;
+ΒΑΡΝΗ;0.2400;0.00;;
+ΒΙΝΤΑ;9.7000;-3.00;10414197.35;VIDAVO
+ΒΙΟ;15.4800;-1.90;3924132981.54;VIOHALCO SA/NV
+ΒΙΟΚΑ;1.4800;-1.99;35835831.00;ΒΙΟΚΑΡΠΕΤ
+ΒΙΟΣΚ;2.1100;0.24;36779259.30;UNIBIOS
+ΒΙΟΤ;0.2060;0.00;;
+ΒΙΣ;0.1440;0.00;;
+ΒΟΣΥΣ;1.8850;0.00;11922625.00;ΒΟΓΙΑΤΖΟΓΛΟΥ
+ΒΥΤΕ;3.4950;0.00;;
+ΒΩΒΟΣ;0.3040;0.00;;
+ΓΑΛΑΞ;0.7000;0.00;;
+ΓΕΒΚΑ;2.0300;-0.49;48841800.00;ΓΕΝΙΚΗ ΕΜΠΟΡΙΟΥ
+ΓΕΔ;0.0125;0.00;;
+ΓΕΚΤΕΡ;38.6000;-0.87;4510082849.28;ΓΕΚ ΤΕΡΝΑ
+ΓΚΜΕΖΖ;0.2700;-2.53;23474114.28;GALAXY COSMOS MEZZ
+ΓΡΙΒ;11.2400;0.00;;
+ΔΑΑ;12.8000;0.63;4095205750.35;ΔΙΕΘΝΗΣ ΑΕΡ/ΝΑΣ ΑΘΗΝΩΝ
+ΔΑΙΟΣ;7.4000;0.00;111000000.00;ΔΑΙΟΣ ΠΛΑΣΤΙΚΑ
+ΔΕΗ;22.5200;-2.43;13417529365.42;ΔΕΗ
+ΔΙΟΝ;0.1100;0.00;;
+ΔΙΧΘ;0.0500;0.00;;
+ΔΟΜΙΚ;2.2800;-0.87;36838695.36;ΔΟΜΙΚΗ ΚΡΗΤΗΣ
+ΔΟΥΡΟ;0.2500;0.00;;
+ΔΡΟΜΕ;0.2860;-6.84;;
+ΔΡΟΥΚ;1.4000;0.00;;
+ΕΒΖ;0.0750;0.00;;
+ΕΒΡΟΦ;3.7700;0.80;51274500.00;ΕΒΡΟΦΑΡΜΑ
+ΕΔΡΑ;0.1500;0.00;;
+ΕΕΕ;54.3000;0.18;20341556129.00;COCA-COLA HBC AG
+ΕΚΤΕΡ;4.6250;-0.75;129077014.71;ΕΚΤΕΡ
+ΕΛΒΕ;7.6500;0.66;25633125.00;ΕΛΒΕ
+ΕΛΒΙΟ;2.6000;0.00;;
+ΕΛΓΕΚ;0.5600;0.00;;
+ΕΛΙΝ;1.8750;0.00;45035165.70;ΕΛΙΝΟΙΛ
+ΕΛΙΧΘ;0.0700;0.00;;
+ΕΛΚΑ;1.3100;0.00;;
+ΕΛΛ;14.7500;0.34;295986801.40;ΕΛΛΑΔΟΣ ΤΡΑΠΕΖΑ
+ΕΛΛΑΚΤ;1.2200;-0.65;425490630.11;ΕΛΛΑΚΤΩΡ
+ΕΛΠΕ;18.4200;-0.97;5605349292.90;HELLENiQ ENERGY
+ΕΛΣΤΡ;2.4700;-0.80;44820637.29;ΕΛΑΣΤΡΟΝ
+ΕΛΤΚ;3.3000;0.00;;
+ΕΛΤΟΝ;1.7300;-0.86;45975921.64;ΕΛΤΟΝ
+ΕΛΥΦ;0.1170;0.00;;
+ΕΛΧΑ;3.4500;-1.43;1482550000.36;ΕΛΒΑΛΧΑΛΚΟΡ
+ΕΜΔΚΟ;0.0800;0.00;;
+ΕΜΔΠΟ;0.1400;0.00;;
+ΕΝΒΙ;1.0300;0.00;;
+ΕΝΚΛΩ;0.0500;0.00;;
+ΕΝΤΕΡ;8.0000;0.00;;
+ΕΠΙΛΚ;0.1320;0.00;;
+ΕΠΣΙΛ;12.0000;0.00;;
+ΕΤΕ;16.0600;-2.67;13966972011.36;ΕΘΝΙΚΗ ΤΡΑΠΕΖΑ
+ΕΥΑΠΣ;4.3950;-0.11;157905000.00;ΕΥΑΘ
+ΕΥΒΡΚ;0.0080;0.00;;
+ΕΥΔΑΠ;13.9000;-0.43;1461180000.00;ΕΥΔΑΠ
+ΕΥΠΙΚ;7.8000;0.00;;
+ΕΥΡΟΜ;0.4480;0.00;;
+ΕΥΡΩΒ;4.3850;-2.90;15187141026.00;EUROBANK
+ΕΦΤΖΙ;0.4800;0.00;;
+ΕΧ;5.0500;0.00;74694550.00;EUROXX
+ΕΧΑΕ;10.8000;-3.57;634860960.00;EURONEXT ATHENS
+ΗΛΕΑΘ;0.4800;0.00;;
+ΗΟΛ;0.5630;0.00;;
+ΗΡΑΚ;1.2300;0.00;;
+ΙΑΣΩ;1.5000;0.00;;
+ΙΑΤΡ;1.4700;1.38;127501890.60;ΙΑΤΡΙΚΟ ΑΘΗΝΩΝ
+ΙΚΤΙΝ;0.2695;-2.00;30180585.60;ΙΚΤΙΝΟΣ ΕΛΛΑΣ
+ΙΛΥΔΑ;4.2400;4.43;58773139.67;ΙΛΥΔΑ
+ΙΛΥΔΑΔ;0.0010;0.00;;
+ΙΝΛΙΦ;7.9600;0.76;146686504.80;ΙΝΤΕΡΛΑΪΦ
+ΙΝΤΕΚ;5.3800;-2.00;299620977.35;IDEAL HOLDINGS
+ΙΝΤΕΡΚ;2.5400;0.00;;
+ΙΝΤΕΤ;1.3550;0.00;10783872.00;ΙΝΤΕΡΤΕΚ
+ΙΝΤΚΑ;3.1050;-0.16;265848000.00;INTRACOM HOLDINGS
+ΙΟΝΑ;10.0200;0.00;;
+ΚΑΘΗ;0.3200;0.00;;
+ΚΑΙΡΟΜ;0.3100;1.64;90719918.72;CAIRO MEZZ
+ΚΑΜΠ;2.7000;0.00;;
+ΚΑΝΑΚ;4.3600;0.00;;
+ΚΑΡΔ;0.1400;0.00;;
+ΚΑΡΕΛ;418.0000;0.00;1153680000.00;ΚΑΡΕΛΙΑ
+ΚΑΡΤΖ;10.0000;0.00;;
+ΚΕΚΡ;1.5650;0.00;30795428.37;ΚΕΚΡΟΨ
+ΚΕΠΕΝ;1.9300;0.00;;
+ΚΕΡΑΛ;0.0880;0.00;;
+ΚΛΕΜ;2.0200;0.00;;
+ΚΛΩΝΚ;0.0400;0.00;;
+ΚΛΩΝΠ;0.0800;0.00;;
+ΚΜΟΛ;3.2200;0.00;;
+ΚΟΜΠ;0.0060;0.00;;
+ΚΟΡΔΕ;0.4070;-2.40;;
+ΚΟΡΡΕΣ;5.0800;0.00;;
+ΚΟΥΑΛ;1.2040;0.84;41391966.33;QUALITY & RELIABILITY
+ΚΟΥΕΣ;7.2900;-1.49;775220034.24;QUEST ΣΥΜΜΕΤΟΧΩΝ
+ΚΟΥΜ;0.1320;0.00;;
+ΚΡΕΚΑ;0.2800;0.00;;
+ΚΡΕΤΑ;1.0900;0.00;;
+ΚΡΗΤΩΝ;0.9900;0.00;;
+ΚΡΙ;34.5000;-0.29;1125867880.80;ΚΡΙ - ΚΡΙ
+ΚΤΗΛΑ;2.1800;0.00;;
+ΚΥΠΡ;0.1620;0.00;;
+ΚΥΡΜ;4.5000;0.00;;
+ΛΑΒΙ;1.4760;-1.47;251044370.01;LAVIPHARM
+ΛΑΜΔΑ;6.0700;-2.25;1039211884.20;LAMDA DEVELOPMENT
+ΛΑΜΨΑ;47.4000;0.00;1012653600.00;ΛΑΜΨΑ
+ΛΑΝΑΚ;0.8520;-5.75;;
+ΛΕΒΚ;0.3580;0.00;;
+ΛΕΒΠ;0.2700;0.00;;
+ΛΙΒΑΝ;0.1250;0.00;;
+ΛΟΓΟΣ;2.6400;0.00;12703200.00;LOGISMOS
+ΛΟΥΛΗ;3.2500;-2.11;56154518.40;LOULIS FOOD
+ΛΥΚ;2.7000;0.00;;
+ΜΑΘΙΟ;0.6050;-0.82;;
+ΜΑΙΚ;0.1150;0.00;;
+ΜΑΞΙΜ;0.1000;0.00;;
+ΜΑΡΑΚ;0.2980;0.00;;
+ΜΑΣΤΙΧ;1.1800;0.00;;
+ΜΕΒΑ;5.6200;-0.35;59640000.00;MEVACO
+ΜΕΝΤΙ;3.1000;2.65;13656613.44;MEDICON ΕΛΛΑΣ
+ΜΕΡΚΟ;26.2000;-5.76;12654900.00;MERMEREN KOMB. A.D. PR.
+ΜΕΤΚ;8.2000;0.00;;
+ΜΗΧΚ;0.1000;0.00;;
+ΜΗΧΠ;0.0960;0.00;;
+ΜΙΓ;2.9300;0.00;91217000.00;MIG
+ΜΙΓΡΕ;3.5500;0.00;;
+ΜΙΝ;0.7250;-0.68;;
+ΜΙΝΟΑ;2.4000;0.00;;
+ΜΛΑΝΤ;0.6400;0.00;;
+ΜΛΣ;0.5700;0.00;;
+ΜΟΗ;67.2000;0.22;7544320938.00;ΜΟΤΟΡ ΟΪΛ
+ΜΟΝΤΑ;6.3500;-8.63;129789000.00;ΒΑΡΒΕΡΗΣ Ν. - MODA BAGNO
+ΜΟΤΟ;2.3200;0.43;70852500.00;ΜΟΤΟΔΥΝΑΜΙΚΗ
+ΜΟΥΖΚ;0.5050;0.00;20857598.88;ΜΟΥΖΑΚΗΣ
+ΜΟΧΛ;0.8000;0.00;;
+ΜΠΕΛΑ;27.1000;-1.02;3646681325.54;JUMBO
+ΜΠΛΕΚΕ;4.6500;-0.43;197625000.00;ΜΠΛΕ ΚΕΔΡΟΣ
+ΜΠΟΚΑ;0.0260;0.00;;
+ΜΠΟΠΑ;0.0570;0.00;;
+ΜΠΡΙΚ;3.3000;-0.30;162352371.86;BRIQ PROPERTIES
+ΜΠΤΚ;0.5100;0.00;;
+ΜΥΤΙΛ;52.7000;0.00;;
+ΝΑΚΑΣ;3.4000;0.00;21556000.00;ΝΑΚΑΣ ΜΟΥΣΙΚΗ
+ΝΑΥΠ;1.0400;-2.80;12085607.10;ΚΛΩΣΤ/ΡΓΙΑ ΝΑΥΠΑΚΤΟΥ
+ΝΑΥΤ;0.1070;0.00;;
+ΝΕΛ;0.0700;0.00;;
+ΝΕΩΡΣ;0.1250;0.00;;
+ΝΗΡ;0.2300;0.00;;
+ΝΙΚΑΣ;1.2400;0.00;;
+ΝΙΟΥΣ;0.5000;0.00;;
+ΝΤΟΚΧΟ;1.8000;0.00;;
+ΝΤΟΠΛΕ;0.6480;0.00;;
+ΝΤΟΤΣΟ;35.0000;-2.78;109200000.00;DOTSOFT
+ΝΤΡΙΑΡ;0.0490;0.00;;
+ΞΥΛΚ;0.2250;-0.44;14597055.47;ΙΝΤΕΡΓΟΥΝΤ-ΞΥΛΕΜΠΟΡΙΑ
+ΞΥΛΠ;0.3200;0.00;;
+ΟΛΘ;40.0000;-0.99;403200000.00;ΟΛΘ
+ΟΛΠ;43.9500;-1.46;1092500000.00;ΟΛΠ
+ΟΛΥΜΠ;2.2500;-1.32;91560037.50;ΤΕΧΝΙΚΗ ΟΛΥΜΠΙΑΚΗ
+ΟΠΤΡΟΝ;2.2000;0.00;;
+ΟΡΑΟΡΑ;4.4600;0.00;;
+ΟΡΙΛΙΝ;0.8480;1.19;130821880.75;ORILINA PROPERTIES
+ΟΤΕ;19.3000;-0.21;7640706517.08;ΟΤΕ
+ΠΑΡΝ;0.0700;0.00;;
+ΠΕΙΡ;9.8760;-3.32;11585823684.47;ΤΡΑΠΕΖΑ ΠΕΙΡΑΙΩΣ
+ΠΕΡΣ;1.1500;0.00;;
+ΠΕΡΦ;9.9500;-1.87;146615739.28;PERFORMANCE TECHNOLOGIES
+ΠΕΤΖΚ;0.2600;0.00;;
+ΠΕΤΡΟ;6.8800;1.18;49068576.00;ΠΕΤΡΟΠΟΥΛΟΣ ΠΕΤΡΟΣ
+ΠΗΓΑΣ;0.0890;0.00;;
+ΠΛΑΘ;4.7150;-1.05;203397751.80;ΠΛΑΣΤΙΚΑ ΘΡΑΚΗΣ
+ΠΛΑΙΣ;4.5800;0.00;;
+ΠΛΑΚΡ;15.1000;-1.31;413425920.00;ΠΛΑΣΤΙΚΑ ΚΡΗΤΗΣ
+ΠΠΑΚ;6.4000;0.00;;
+ΠΡΑΞΚ;0.3900;0.00;;
+ΠΡΑΞΠ;0.5400;0.00;;
+ΠΡΔ;0.2220;0.00;;
+ΠΡΕΖΤ;5.7500;0.00;;
+ΠΡΕΜΙΑ;1.2780;-0.93;161164100.92;PREMIA
+ΠΡΟ;0.1800;0.00;;
+ΠΡΟΝΤΕ;3.0000;0.67;801793492.68;ΠΡΟΝΤΕΑ
+ΠΡΟΦ;10.3800;-1.52;256182998.88;PROFILE
+ΠΣΥΣΤ;0.0060;0.00;;
+ΡΕΒΟΙΛ;1.7700;-2.21;38127922.26;ΡΕΒΟΪΛ
+ΣΑΝΜΕΖ;0.1470;6.52;23667666.09;SUNRISEMEZZ
+ΣΑΟΣ;1.5600;0.00;;
+ΣΑΡ;10.8800;-0.37;689234000.00;ΣΑΡΑΝΤΗΣ ΓΡ.
+ΣΑΡΑΝ;1.5600;0.00;;
+ΣΑΤΟΚ;0.0280;0.00;;
+ΣΕΛΜΚ;0.0800;0.00;;
+ΣΕΛΟ;0.1000;0.00;;
+ΣΕΝΤΡ;0.2560;0.39;25786570.53;CENTRIC ΣΥΜΜΕΤΟΧΩΝ
+ΣΙΔΕ;1.0400;0.00;;
+ΣΙΔΜΑ;2.3000;-2.13;31646579.59;ΣΙΔΜΑ ΜΕΤΑΛΛΟΥΡΓΙΚΗ
+ΣΠΕΙΣ;7.9600;-2.45;50102672.80;SPACE HELLAS
+ΣΠΙ;0.4700;-0.42;;
+ΣΠΙΝΤ;0.0080;0.00;;
+ΣΠΡΙ;0.0310;0.00;;
+ΣΠΥΡ;0.3280;0.00;;
+ΣΦΑ;0.3400;0.00;;
+ΣΩΛΚ;0.6190;0.00;;
+ΤΒΑΝΚ;0.0480;0.00;;
+ΤΕΓΟ;0.0380;0.00;;
+ΤΕΚΔΟ;0.0060;0.00;;
+ΤΕΝΕΡΓ;20.0000;0.00;;
+ΤΕΞΤ;0.0800;0.00;;
+ΤΖΚΑ;2.0400;0.49;;
+ΤΗΛΕΤ;0.0600;0.00;;
+ΤΙΤΚ;19.6400;0.00;;
+ΤΙΤΠ;18.9800;0.00;;
+ΤΡΑΣΤΟ;0.9060;-0.66;359343752.95;TRASTOR
+ΤΡΕΣΤΑ;1.9520;-0.31;238144688.03;TRADE ESTATES
+ΤΡΟΠ;2.0000;0.00;;
+ΤΤ;0.1680;0.00;;
+ΥΑΛΚΟ;0.1600;0.00;;
+ΥΓΕΙΑ;0.9500;0.00;;
+ΦΑΙΣ;3.2250;-1.68;152692975.80;ΦΑΙΣ ΣΥΜΜΕΤΟΧΩΝ Α.Ε.
+ΦΒΜΕΖΖ;0.0496;-0.40;59017333.21;PHOENIX VEGA MEZZ
+ΦΙΕΡ;0.3590;0.00;;
+ΦΙΝΤΟ;0.3280;0.00;;
+ΦΛΕΞΟ;7.7500;0.00;91397782.40;FLEXOPACK
+ΦΟΡΘ;0.3000;0.00;;
+ΦΟΥΝΤΛ;1.0450;-1.42;35520466.82;ΦΟΥΝΤΛΙΝΚ
+ΦΡΙΓΟ;0.3190;-3.04;39622229.32;FRIGOGLASS
+ΦΡΛΚ;4.0000;1.39;208008495.45;FOURLIS ΣΥΜΜΕΤΟΧΩΝ
+ΦΦΓΚΡΠ;4.8000;0.00;;
+ΧΑΙΔΕ;1.0100;1.00;;
+ΧΑΛΥΒ;0.1200;0.00;;
+ΧΑΤΖΚ;0.0260;0.00;;
+ΧΚΡΑΝ;0.1400;0.00;;
+</script>
+
+<script>
+(function () {
+  var NAMES = {
+    "ΕΤΕ": "Εθνική Τράπεζα", "ΕΥΡΩΒ": "Eurobank", "ΠΕΙΡ": "Τράπεζα Πειραιώς", "ΑΛΦΑ": "Alpha Bank", "OPTIMA": "Optima Bank",
+    "BOCHGR": "Bank of Cyprus", "ΔΕΗ": "ΔΕΗ", "ΕΛΠΕ": "Helleniq Energy", "ΜΟΗ": "Motor Oil", "ΤΕΝΕΡΓ": "Τέρνα Ενεργειακή",
+    "ΟΤΕ": "ΟΤΕ", "ΜΠΕΛΑ": "Jumbo", "ΚΡΙ": "Κρι Κρι", "ΤΙΤΚ": "Titan Cement", "TITC": "Titan Cement International",
+    "MTLN": "Metlen", "ΓΕΚΤΕΡ": "Γεκτέρνα", "ΛΑΜΔΑ": "Lamda Development", "ΕΧΑΕ": "Χρηματιστήριο Αθηνών", "ΟΛΠ": "ΟΛΠ",
+    "ΟΛΘ": "ΟΛΘ", "ΕΥΔΑΠ": "ΕΥΔΑΠ", "ΕΥΑΠΣ": "ΕΥΑΘ", "ΑΔΜΗΕ": "ΑΔΜΗΕ Συμμετοχών", "ΔΑΑ": "Διεθνής Αερολιμένας Αθηνών",
+    "ΕΕΕ": "Coca-Cola HBC", "ΣΑΡ": "Sarantis", "ΒΙΟ": "Viohalco", "CENER": "Cenergy", "ΑΒΑΞ": "AVAX", "AKTR": "Aktor",
+    "QLCO": "Qualco", "ΙΑΤΡ": "Ιατρικό Αθηνών", "ΠΛΑΙΣ": "Plaisio", "ΛΑΜΨΑ": "Λάμψα", "ΦΡΛΚ": "Fourlis", "ΕΥΠΙΚ": "Ευρωπαϊκή Πίστη",
+    "ΕΚΤΕΡ": "Εκτέρ", "ΕΛΛΑΚΤ": "Ελλάκτωρ", "ΔΟΜΙΚ": "Δομική Κρήτης", "ΒΙΟΚΑ": "Βιοκαρπέτ", "ΜΑΘΙΟ": "Μαθιός Πυρίμαχα",
+    "ΧΑΙΔΕ": "Χαϊδεμένος", "ΜΠΛΕΚΕ": "Μπλε Κέδρος", "ΜΙΓ": "Marfin Investment Group", "ΠΕΤΡΟ": "Πετρόπουλος", "ΕΛΒΕ": "ΕΛΒΕ",
+    "ALWN": "Allwyn (πρώην ΟΠΑΠ)", "ΙΛΥΔΑ": "Ilyda"
+  };
+  var SEC = {
+    "Τράπεζες": ["ΕΤΕ", "ΕΥΡΩΒ", "ΠΕΙΡ", "ΑΛΦΑ", "OPTIMA", "BOCHGR", "CREDIA"],
+    "Χρηματοοικονομικά": ["ΕΧΑΕ", "ΜΙΓ", "ΙΝΤΕΚ", "ΙΝΛΙΦ", "ΕΥΠΙΚ", "ΕΛΛ", "ΚΑΙΡΟΜ", "ΣΑΝΜΕΖ", "ΓΚΜΕΖΖ", "ΦΒΜΕΖΖ"],
+    "Ενέργεια": ["ΜΟΗ", "ΕΛΠΕ", "ΕΛΙΝ", "ΡΕΒΟΙΛ", "ΤΕΝΕΡΓ"],
+    "Κοινής ωφελείας": ["ΔΕΗ", "ΑΔΜΗΕ", "ΕΥΔΑΠ", "ΕΥΑΠΣ"],
+    "Τεχνολογία & Τηλεπικοινωνίες": ["ΟΤΕ", "QLCO", "ΚΟΥΕΣ", "ΠΕΡΦ", "ΙΝΤΚΑ", "ΣΠΕΙΣ", "ΝΤΟΤΣΟ", "ΠΡΟΦ", "ΛΟΓΟΣ", "ACAG", "ΙΛΥΔΑ", "ΙΝΤΕΤ", "ΚΟΥΑΛ"],
+    "Ακίνητα": ["ΛΑΜΔΑ", "NOVAL", "DIMAND", "ΜΠΡΙΚ", "ΠΡΟΝΤΕ", "ΤΡΕΣΤΑ", "ΟΡΙΛΙΝ", "ΑΣΤΑΚ", "ΠΡΕΜΙΑ", "ΤΡΑΣΤΟ", "ΜΠΛΕΚΕ", "EVR"],
+    "Ναυτιλία & Μεταφορές": ["SBLK", "SB", "CMFC", "ΑΡΑΙΓ", "ΟΛΠ", "ΟΛΘ", "ΔΑΑ", "ΑΤΤΙΚΑ", "ΑΝΕΚ"],
+    "Κατασκευές & Υλικά": ["ΑΒΑΞ", "ΕΛΛΑΚΤ", "ΕΚΤΕΡ", "AKTR", "ΓΕΚΤΕΡ", "ΔΟΜΙΚ", "ΤΙΤΚ", "TITC", "ΤΙΤΠ", "ΙΚΤΙΝ", "ΜΕΡΚΟ"],
+    "Βιομηχανία": ["MTLN", "ΜΥΤΙΛ", "ΒΙΟ", "CENER", "ΕΛΧΑ", "ΠΛΑΚΡ", "ΠΛΑΘ", "ΕΛΤΟΝ", "ΣΙΔΜΑ", "ΦΛΕΞΟ", "ΔΑΙΟΣ", "ΑΛΜΥ", "ΕΛΣΤΡ", "ΒΙΟΚΑ", "ΠΕΤΡΟ", "ΦΡΙΓΟ"],
+    "Καταναλωτικά & Λιανικό": ["ΕΕΕ", "ΚΡΙ", "ΣΑΡ", "ΚΑΡΕΛ", "ΛΟΥΛΗ", "ΜΠΕΛΑ", "ΦΡΛΚ", "ΠΛΑΙΣ", "ΑΣΚΟ", "ΜΟΤΟ", "ΕΛΒΕ", "ΜΟΝΤΑ", "ΓΕΒΚΑ"],
+    "Τουρισμός & Παιχνίδια": ["ΛΑΜΨΑ", "ALWN", "BYLOT", "ONYX", "ΑΣΤΗΡ"],
+    "Υγεία": ["ΙΑΤΡ", "ΛΑΒΙ", "ΕΒΡΟΦ", "ΜΕΝΤΙ", "ΒΙΝΤΑ", "ΙΑΣΩ"]
+  };
+  var SECMAP = {};
+  Object.keys(SEC).forEach(function (k) { SEC[k].forEach(function (s) { SECMAP[s] = k; }); });
+  var OTHER = "Λοιπές";
+  var rows = document.getElementById("quotes").textContent.split("\n").map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+    var p = l.split(";");
+    var price = parseFloat(p[1].replace(",", "."));
+    var chg = parseFloat(p[2].replace(/[%\s]/g, "").replace(",", "."));
+    var mc = p[3] ? parseFloat(p[3]) : null;
+    return { sym: p[0], name: NAMES[p[0]] || p[4] || "", price: price, chg: chg, diff: price - price / (1 + chg / 100), prev: price / (1 + chg / 100), mcap: mc, sector: SECMAP[p[0]] || OTHER };
+  });
+  var N = rows.length;
+
+  var nf = new Intl.NumberFormat("el-GR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  var nf2 = new Intl.NumberFormat("el-GR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function sgn(v) { return v > 0.004 ? "+" : v < -0.004 ? "−" : ""; }
+  function cls(v) { return v > 0.004 ? "up" : v < -0.004 ? "down" : "flat"; }
+  function arrow(v) { return v > 0.004 ? "▲ " : v < -0.004 ? "▼ " : ""; }
+  function chgHtml(v) { return '<span class="chg num ' + cls(v) + '">' + arrow(v) + sgn(v) + nf2.format(Math.abs(v)) + "%</span>"; }
+  function diffHtml(v) { return '<span class="chg num ' + cls(v) + '">' + sgn(v) + nf.format(Math.abs(v)) + " €</span>"; }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  function monoHtml(sym) {
+    var h = 0; for (var i = 0; i < sym.length; i++) h = (h * 31 + sym.charCodeAt(i)) % 360;
+    return '<div class="mono" style="background:hsl(' + h + ' 38% 30%);color:hsl(' + h + ' 85% 85%)" aria-hidden="true">' + esc(sym.slice(0, 2)) + "</div>";
+  }
+  function barPos(v) {
+    var w = Math.min(Math.abs(v), 10) / 10 * 50;
+    return v >= 0 ? { left: 50, width: w, c: "up" } : { left: 50 - w, width: w, c: "down" };
+  }
+  function barHtml(v, cl) {
+    var b = barPos(v);
+    return '<i class="' + b.c + '" style="left:' + b.left + "%;width:" + b.width + '%"></i>';
+  }
+
+  /* favorites */
+  var favs = {};
+  try { (JSON.parse(localStorage.getItem("agora-favs") || "[]")).forEach(function (s) { favs[s] = true; }); } catch (e) {}
+  function saveFavs() { try { localStorage.setItem("agora-favs", JSON.stringify(Object.keys(favs))); } catch (e) {} }
+  function favCount() { return Object.keys(favs).length; }
+
+  /* summary */
+  var ups = rows.filter(function (r) { return r.chg > 0.004; }).length;
+  var downs = rows.filter(function (r) { return r.chg < -0.004; }).length;
+  var flats = N - ups - downs;
+  var withCap = rows.filter(function (r) { return r.mcap && r.sym !== "ΑΔΑΚ"; });
+  var totalCap = withCap.reduce(function (a, r) { return a + r.mcap; }, 0);
+  var wChg = withCap.reduce(function (a, r) { return a + r.chg * r.mcap; }, 0) / totalCap;
+  function pc(n) { return (n / N * 100); }
+  function money(v) { return v >= 1e9 ? nf2.format(v / 1e9) + " δισ. €" : nf2.format(v / 1e6) + " εκ. €"; }
+  document.getElementById("stats").innerHTML =
+    '<div class="stat"><div class="lbl">Κεφαλαιοποίηση αγοράς</div><div class="val num">' + money(totalCap) + '</div><div class="sub" style="color:var(--muted)">' + withCap.length + " εταιρείες με γνωστή αξία</div></div>" +
+    '<div class="stat"><div class="lbl">Μεταβολή σήμερα</div><div class="val num" style="color:var(--' + (wChg >= 0 ? "up" : "down") + ')">' + arrow(wChg) + sgn(wChg) + nf2.format(Math.abs(wChg)) + '%</div><div class="sub" style="color:var(--muted)">σταθμισμένη με την κεφαλαιοποίηση</div></div>' +
+    '<div class="stat wide"><div class="lbl">Εύρος αγοράς σήμερα · ' + N + ' μετοχές</div>' +
+    '<div class="breadth" role="img" aria-label="Άνοδοι ' + ups + ", πτώσεις " + downs + ", αμετάβλητες " + flats + '"><i class="u" style="width:' + pc(ups) + '%"></i><i class="f" style="width:' + pc(flats) + '%"></i><i class="d" style="width:' + pc(downs) + '%"></i></div>' +
+    '<div class="legend num"><span style="color:var(--up)">▲ ' + ups + " σε άνοδο</span><span>" + flats + ' αμετάβλητες</span><span style="color:var(--down)">▼ ' + downs + " σε πτώση</span></div></div>";
+
+  var byCap = withCap.slice().sort(function (a, b) { return b.mcap - a.mcap; });
+  byCap.forEach(function (r, i) { r.rank = i + 1; });
+  var bigMovers = withCap.filter(function (r) { return r.mcap >= 5e7; }).sort(function (a, b) { return b.chg - a.chg; });
+  var byChg = rows.slice().sort(function (a, b) { return b.chg - a.chg; });
+  function mrow(s, mode) {
+    return '<button type="button" class="mrow" data-s="' + esc(s.sym) + '">' + monoHtml(s.sym) + '<div class="nm"><b>' + esc(s.sym) + "</b><span>" + esc(s.name || "—") + '</span></div><div class="px num"><div class="price">' + (mode === "cap" ? money(s.mcap) : nf.format(s.price) + " €") + "</div>" + chgHtml(s.chg) + "</div></button>";
+  }
+  document.getElementById("gainers").innerHTML = bigMovers.slice(0, 5).map(function (s) { return mrow(s); }).join("");
+  document.getElementById("losers").innerHTML = bigMovers.slice(-5).reverse().map(function (s) { return mrow(s); }).join("");
+  document.getElementById("biggest").innerHTML = byCap.slice(0, 5).map(function (s) { return mrow(s, "cap"); }).join("");
+
+  /* table */
+  var PAGE = 50;
+  var state = { f: "all", q: "", sector: "", key: "mcap", dir: -1, shown: PAGE };
+  var tabsEl = document.getElementById("tabs");
+  function tabsHtml() {
+    var F = [["all", "Όλες", N], ["up", "Σε άνοδο", ups], ["down", "Σε πτώση", downs], ["flat", "Αμετάβλητες", flats], ["fav", "★ Αγαπημένα", favCount()]];
+    tabsEl.innerHTML = F.map(function (f) { return '<button type="button" class="tab" data-f="' + f[0] + '" aria-pressed="' + (f[0] === state.f) + '">' + f[1] + " (" + f[2] + ")</button>"; }).join("");
+  }
+  tabsHtml();
+  var secEl = document.getElementById("sectors");
+  var secNames = Object.keys(SEC).concat([OTHER]);
+  function secStats(name) {
+    var list = rows.filter(function (r) { return r.sector === name; });
+    var capped = list.filter(function (r) { return r.mcap && r.sym !== "ΑΔΑΚ"; });
+    var tot = capped.reduce(function (a, r) { return a + r.mcap; }, 0);
+    var chg = tot ? capped.reduce(function (a, r) { return a + r.chg * r.mcap; }, 0) / tot : list.reduce(function (a, r) { return a + r.chg; }, 0) / (list.length || 1);
+    return { n: list.length, tot: tot, chg: chg };
+  }
+  function sectorsHtml() {
+    var allChip = '<button type="button" class="secchip" data-sec="" aria-pressed="' + (state.sector === "") + '"><b>Όλοι οι κλάδοι</b><span class="num">' + N + " μετοχές</span></button>";
+    secEl.innerHTML = allChip + secNames.map(function (name) {
+      var s = secStats(name);
+      if (!s.n) return "";
+      return '<button type="button" class="secchip" data-sec="' + esc(name) + '" aria-pressed="' + (state.sector === name) + '"><b>' + esc(name) + '</b><span class="num">' + s.n + " μετοχές" + (s.tot ? " · " + money(s.tot) : "") + "</span>" + chgHtml(s.chg) + "</button>";
+    }).join("");
+  }
+  sectorsHtml();
+  secEl.addEventListener("click", function (e) {
+    var c = e.target.closest(".secchip"); if (!c) return;
+    var v = c.getAttribute("data-sec");
+    state.sector = state.sector === v ? "" : v; state.shown = PAGE; sectorsHtml(); render();
+  });
+  tabsEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".tab"); if (!b) return;
+    state.f = b.getAttribute("data-f"); state.shown = PAGE; tabsHtml(); render();
+  });
+  document.getElementById("q").addEventListener("input", function (e) { state.q = e.target.value.trim().toLowerCase(); state.shown = PAGE; render(); });
+  var ths = document.querySelectorAll("th[data-k]");
+  Array.prototype.forEach.call(ths, function (th) {
+    th.querySelector("button").addEventListener("click", function () {
+      var k = th.getAttribute("data-k");
+      if (state.key === k) state.dir = -state.dir; else { state.key = k; state.dir = k === "sym" ? 1 : -1; }
+      state.shown = PAGE; render();
+    });
+  });
+  var moreBtn = document.getElementById("more");
+  moreBtn.addEventListener("click", function () { state.shown += PAGE; render(); });
+
+  function render() {
+    var list = rows.filter(function (r) {
+      var okF = state.f === "all" || (state.f === "up" && r.chg > 0.004) || (state.f === "down" && r.chg < -0.004) || (state.f === "flat" && Math.abs(r.chg) <= 0.004) || (state.f === "fav" && favs[r.sym]);
+      return okF && (!state.sector || r.sector === state.sector) && (!state.q || r.sym.toLowerCase().indexOf(state.q) > -1 || r.name.toLowerCase().indexOf(state.q) > -1);
+    });
+    list.sort(function (a, b) {
+      var x = a[state.key], y = b[state.key];
+      if (x == null && y == null) return a.sym.localeCompare(b.sym, "el");
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return (typeof x === "string" ? x.localeCompare(y, "el") : x - y) * state.dir;
+    });
+    Array.prototype.forEach.call(ths, function (th) {
+      th.setAttribute("aria-sort", th.getAttribute("data-k") === state.key ? (state.dir > 0 ? "ascending" : "descending") : "none");
+    });
+    var empty = document.getElementById("empty");
+    empty.hidden = list.length > 0;
+    empty.textContent = state.f === "fav" && !state.q ? "Πάτα ☆ δίπλα σε μια μετοχή για να την προσθέσεις στα αγαπημένα." : "Καμία μετοχή δεν ταιριάζει.";
+    var shown = list.slice(0, state.shown);
+    document.getElementById("rows").innerHTML = shown.map(function (s, i) {
+      return '<tr tabindex="0" data-s="' + esc(s.sym) + '"><td class="starcol"><button type="button" class="star" data-star="' + esc(s.sym) + '" aria-pressed="' + !!favs[s.sym] + '" aria-label="Αγαπημένο: ' + esc(s.sym) + '">' + (favs[s.sym] ? "★" : "☆") + '</button></td>' +
+        '<td class="l idx num hide-s">' + (s.rank || "—") + '</td><td class="l"><div class="who">' + monoHtml(s.sym) + "<div><b>" + esc(s.sym) + "</b>" + (s.name ? "<span>" + esc(s.name) + "</span>" : "") + "</div></div></td>" +
+        '<td class="num price">' + nf.format(s.price) + " €</td><td>" + chgHtml(s.chg) + '</td><td class="hide-s">' + diffHtml(s.diff) + '</td><td class="num hide-s">' + (s.mcap ? money(s.mcap) : "—") + '</td><td class="mvcell"><div class="mv">' + barHtml(s.chg) + "</div></td></tr>";
+    }).join("");
+    if (list.length > shown.length) { moreBtn.hidden = false; moreBtn.textContent = "Εμφάνιση περισσότερων (" + (list.length - shown.length) + " ακόμα)"; } else { moreBtn.hidden = true; }
+  }
+
+  var rowsEl = document.getElementById("rows");
+  rowsEl.addEventListener("click", function (e) {
+    var st = e.target.closest("[data-star]");
+    if (st) { toggleFav(st.getAttribute("data-star")); return; }
+    var tr = e.target.closest("tr"); if (tr) openStock(tr.getAttribute("data-s"), tr);
+  });
+  rowsEl.addEventListener("keydown", function (e) {
+    if ((e.key === "Enter" || e.key === " ") && !e.target.closest("[data-star]")) { var tr = e.target.closest("tr"); if (tr) { e.preventDefault(); openStock(tr.getAttribute("data-s"), tr); } }
+  });
+  ["gainers", "losers", "biggest"].forEach(function (id) {
+    document.getElementById(id).addEventListener("click", function (e) { var b = e.target.closest(".mrow"); if (b) openStock(b.getAttribute("data-s"), b); });
+  });
+  function toggleFav(sym) {
+    if (favs[sym]) delete favs[sym]; else favs[sym] = true;
+    saveFavs(); tabsHtml(); render();
+    if (!drawer.hidden && cur && cur.sym === sym) paint();
+  }
+
+  /* detail drawer */
+  var drawer = document.getElementById("drawer"), scrim = document.getElementById("scrim");
+  var cur = null, lastFocus = null;
+  function kv(a, b) { return "<div><dt>" + a + "</dt><dd>" + b + "</dd></div>"; }
+  function paint() {
+    var s = cur, b = barPos(s.chg);
+    var rc = byChg.indexOf(s) + 1;
+    drawer.innerHTML =
+      '<div class="dh"><div><h2 id="dname">' + esc(s.sym) + (s.name ? " · " + esc(s.name) : "") + '</h2><div class="sec">Χρηματιστήριο Αθηνών</div></div><button type="button" class="close" id="dclose" aria-label="Κλείσιμο">×</button></div>' +
+      '<div class="bigp"><span class="p num">' + nf.format(s.price) + " €</span>" + chgHtml(s.chg) + '<span class="sec" style="color:var(--muted)">σήμερα</span></div>' +
+      '<div><div class="gauge"><i class="' + b.c + '" style="left:' + b.left + "%;width:" + b.width + '%"></i></div><div class="gl num"><span>−10%</span><span>0</span><span>+10%</span></div></div>' +
+      '<dl class="kv num">' + kv("Κλάδος", esc(s.sector)) + kv("Προηγ. κλείσιμο (υπολογισμός)", nf.format(s.prev) + " €") + kv("Μεταβολή", sgn(s.diff) + nf.format(Math.abs(s.diff)) + " €") +
+      (s.mcap ? kv("Κεφαλαιοποίηση", money(s.mcap)) + kv("Μερίδιο αγοράς", nf2.format(s.mcap / totalCap * 100) + "%") + kv("Θέση ως προς την αξία", s.rank + " από " + withCap.length) : kv("Κεφαλαιοποίηση", "—")) + kv("Θέση ως προς τη μεταβολή", rc + " από " + N) + "</dl>" +
+      (holdingLine(s.sym)) +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="btn primary" id="pfbtn">+ Στο χαρτοφυλάκιο</button>' +
+      '<button type="button" class="favbtn" id="favbtn" aria-pressed="' + !!favs[s.sym] + '">' + (favs[s.sym] ? "★ Στα αγαπημένα" : "☆ Προσθήκη στα αγαπημένα") + "</button></div>" +
+      '<p class="note">Ο όγκος και το ιστορικό τιμών δεν υπάρχουν στις πηγές, γι' + "'" + ' αυτό δεν εμφανίζονται.</p>';
+    document.getElementById("dclose").addEventListener("click", closeStock);
+    document.getElementById("favbtn").addEventListener("click", function () { toggleFav(s.sym); });
+    document.getElementById("pfbtn").addEventListener("click", function () { closeStock(); showView("portfolio"); openForm(s.sym, "buy"); });
+  }
+  function openStock(sym, from) {
+    cur = rows.filter(function (s) { return s.sym === sym; })[0]; if (!cur) return;
+    lastFocus = from || null; paint();
+    drawer.hidden = false; scrim.hidden = false; drawer.scrollTop = 0;
+    document.getElementById("dclose").focus();
+  }
+  function closeStock() {
+    drawer.hidden = true; scrim.hidden = true;
+    var t = lastFocus && lastFocus.getAttribute ? document.querySelector('[data-s="' + lastFocus.getAttribute("data-s") + '"]') : null;
+    if (t) t.focus();
+  }
+  scrim.addEventListener("click", closeStock);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawer.hidden) closeStock(); });
+
+
+  /* ===== portfolio ===== */
+  var BYSYM = {};
+  rows.forEach(function (r) { BYSYM[r.sym] = r; });
+  var txns = [];
+  var pfRef = null, pfWriting = Promise.resolve(), pfMode = "local";
+  var LKEY = "agora-portfolio";
+  function loadLocal() { try { var v = JSON.parse(localStorage.getItem(LKEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+  function saveLocal() { try { localStorage.setItem(LKEY, JSON.stringify(txns)); } catch (e) {} }
+  txns = loadLocal();
+
+  function setStorageNote() {
+    document.getElementById("pf-storage").textContent = pfMode === "db"
+      ? "Οι καταχωρήσεις αποθηκεύονται στον λογαριασμό σου και τις βλέπεις μόνο εσύ."
+      : "Οι καταχωρήσεις αποθηκεύονται μόνο σε αυτόν τον browser.";
+  }
+  function persist() {
+    saveLocal();
+    if (!pfRef) return Promise.resolve();
+    var body = { txns: txns.slice(), updated: Date.now() };
+    pfWriting = pfWriting.then(function () { return pfRef.set(body); }).catch(function (e) {
+      if (e && (e.code === "invalid_argument" || e.code === "revoked" || e.code === "not_granted")) { pfRef = null; pfMode = "local"; setStorageNote(); }
+      toast(e && e.code === "quota_exceeded" ? "Ο χώρος αποθήκευσης γέμισε. Σβήσε κάποιες συναλλαγές." : "Η αποθήκευση στον λογαριασμό απέτυχε. Κρατήθηκε σε αυτόν τον browser.");
+    });
+    return pfWriting;
+  }
+  function renderAcct(me) {
+    var el = document.getElementById("acct");
+    if (!me || !me.id) {
+      el.innerHTML = '<span class="ic" aria-hidden="true">?</span><span><span class="an">Επισκέπτης</span> <span class="as">· χωρίς λογαριασμό</span></span>';
+      el.title = "Το χαρτοφυλάκιο αποθηκεύεται μόνο σε αυτόν τον browser.";
+      return;
+    }
+    el.innerHTML = '<img alt="" src="' + esc(me.avatarUrl).replace(/"/g, "&quot;") + '"><span style="min-width:0;display:flex;flex-direction:column;line-height:1.25"><span class="an"></span><span class="as">Συνδεδεμένος</span></span>';
+    el.querySelector(".an").textContent = me.name || "Ο λογαριασμός σου";
+    el.title = "Το χαρτοφυλάκιό σου αποθηκεύεται στον λογαριασμό σου.";
+  }
+  (function connect() {
+    var c = window.claude;
+    if (!c || typeof c.use !== "function") { renderAcct(null); return; }
+    Promise.all([c.use("db"), c.use("user")]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (user) user.me().then(renderAcct).catch(function () { renderAcct(null); }); else renderAcct(null);
+      if (!db || !user) return null;
+      return user.id().then(function (uid) {
+        if (!uid) return;
+        var ref = db.doc("data/users/" + uid + "/portfolio");
+        var first = true;
+        ref.onSnapshot(function (snap) {
+          if (first) {
+            first = false; pfRef = ref; pfMode = "db"; setStorageNote();
+            if (!snap.exists) { if (txns.length) persist(); renderPortfolio(); return; }
+          }
+          if (snap.exists) {
+            var d = snap.data();
+            txns = Array.isArray(d.txns) ? d.txns.slice() : [];
+            saveLocal(); renderPortfolio();
+            if (!drawer.hidden && cur) paint();
+          }
+        }, function () { pfRef = null; pfMode = "local"; setStorageNote(); });
+      });
+    }).catch(function () { renderAcct(null); });
+  })();
+
+  function holdings() {
+    var map = {}, realized = 0;
+    txns.slice().sort(function (a, b) { return (a.date || "").localeCompare(b.date || "") || (a.ts || 0) - (b.ts || 0); }).forEach(function (t) {
+      var h = map[t.sym] || (map[t.sym] = { sym: t.sym, qty: 0, cost: 0, realized: 0 });
+      if (t.side === "sell") {
+        var q = Math.min(t.qty, h.qty), avg = h.qty ? h.cost / h.qty : 0;
+        h.realized += q * (t.price - avg); realized += q * (t.price - avg);
+        h.cost -= q * avg; h.qty -= q;
+        if (h.qty < 1e-9) { h.qty = 0; h.cost = 0; }
+      } else { h.qty += t.qty; h.cost += t.qty * t.price; }
+    });
+    var list = Object.keys(map).map(function (k) {
+      var h = map[k], r = BYSYM[k];
+      h.row = r || null;
+      h.price = r ? r.price : (h.qty ? h.cost / h.qty : 0);
+      h.value = h.qty * h.price;
+      h.avg = h.qty ? h.cost / h.qty : 0;
+      h.pl = h.value - h.cost;
+      h.plPct = h.cost ? h.pl / h.cost * 100 : 0;
+      h.day = r ? h.qty * r.diff : 0;
+      return h;
+    }).filter(function (h) { return h.qty > 0; });
+    var value = list.reduce(function (a, h) { return a + h.value; }, 0);
+    var cost = list.reduce(function (a, h) { return a + h.cost; }, 0);
+    var day = list.reduce(function (a, h) { return a + h.day; }, 0);
+    list.forEach(function (h) { h.weight = value ? h.value / value * 100 : 0; });
+    list.sort(function (a, b) { return b.value - a.value; });
+    return { list: list, value: value, cost: cost, unreal: value - cost, realized: realized, day: day, prevValue: value - day };
+  }
+  function heldQty(sym) { var h = holdings().list.filter(function (x) { return x.sym === sym; })[0]; return h ? h.qty : 0; }
+  function holdingLine(sym) {
+    var h = holdings().list.filter(function (x) { return x.sym === sym; })[0];
+    if (!h) return "";
+    return '<div class="panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px"><span>Στο χαρτοφυλάκιο: <b class="num">' + fmtQty(h.qty) + ' τεμ.</b> · αξία <b class="num">' + eur(h.value) + '</b></span>' + plHtml(h.pl, h.plPct) + "</div>";
+  }
+
+  var nf0 = new Intl.NumberFormat("el-GR", { maximumFractionDigits: 4 });
+  function fmtQty(v) { return nf0.format(v); }
+  function eur(v) { return nf2.format(v) + " €"; }
+  function eurS(v) { return '<span class="chg num ' + cls(v) + '">' + sgn(v) + nf2.format(Math.abs(v)) + " €</span>"; }
+  function plHtml(v, p) { return '<span class="chg num ' + cls(v) + '">' + sgn(v) + nf2.format(Math.abs(v)) + " € (" + sgn(p) + nf2.format(Math.abs(p)) + "%)</span>"; }
+  function hue(sym) { var h = 0; for (var i = 0; i < sym.length; i++) h = (h * 31 + sym.charCodeAt(i)) % 360; return h; }
+  function fmtDate(d) { if (!d) return "—"; var p = d.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : d; }
+
+  var pfBody = document.getElementById("pf-body");
+  function renderPortfolio() {
+    var H = holdings();
+    if (!txns.length) {
+      pfBody.innerHTML = '<div class="panel pempty"><h3>Το χαρτοφυλάκιο είναι άδειο</h3><p>Πρόσθεσε μια εικονική αγορά για να παρακολουθείς αξία, κέρδος και κατανομή με τις τιμές της σελίδας. Μπορείς επίσης να πατήσεις μια μετοχή στην Αγορά και «+ Στο χαρτοφυλάκιο».</p><button type="button" class="btn primary" data-act="add">+ Προσθήκη πρώτης συναλλαγής</button></div>';
+      return;
+    }
+    var totPL = H.unreal + H.realized;
+    var plPct = H.cost ? H.unreal / H.cost * 100 : 0;
+    var dayPct = H.prevValue ? H.day / H.prevValue * 100 : 0;
+    var stats =
+      '<section class="stats" aria-label="Σύνοψη χαρτοφυλακίου">' +
+      '<div class="stat"><div class="lbl">Τρέχουσα αξία</div><div class="val num">' + eur(H.value) + '</div><div class="sub" style="color:var(--muted)">' + H.list.length + (H.list.length === 1 ? " μετοχή" : " μετοχές") + "</div></div>" +
+      '<div class="stat"><div class="lbl">Μεταβολή σήμερα</div><div class="val num">' + eurS(H.day) + '</div><div class="sub">' + chgHtml(dayPct) + "</div></div>" +
+      '<div class="stat"><div class="lbl">Μη πραγματοποιημένο Κ/Ζ</div><div class="val num">' + eurS(H.unreal) + '</div><div class="sub">' + chgHtml(plPct) + ' <span style="color:var(--muted)">σε κόστος ' + eur(H.cost) + "</span></div></div>" +
+      '<div class="stat"><div class="lbl">Συνολικό Κ/Ζ</div><div class="val num">' + eurS(totPL) + '</div><div class="sub" style="color:var(--muted)">πραγματοποιημένο ' + sgn(H.realized) + nf2.format(Math.abs(H.realized)) + " €</div></div>" +
+      "</section>";
+    var alloc = "";
+    if (H.list.length) {
+      alloc = '<div class="panel" style="padding:14px 16px"><div class="sechead" style="margin-bottom:10px"><h2>Κατανομή</h2><span class="note">βάρος κάθε μετοχής στην αξία</span></div><div class="alloc" role="img" aria-label="Κατανομή χαρτοφυλακίου">' +
+        H.list.map(function (h) { return '<i style="width:' + h.weight + "%;background:hsl(" + hue(h.sym) + ' 55% 55%)"></i>'; }).join("") + '</div><div class="alloclegend">' +
+        H.list.map(function (h) { return '<span><i class="dot" style="background:hsl(' + hue(h.sym) + ' 55% 55%)"></i><b>' + esc(h.sym) + '</b> <span class="num">' + nf2.format(h.weight) + "%</span></span>"; }).join("") + "</div></div>";
+    }
+    var table = H.list.length ? '<div class="panel tablewrap pf-panel"><h2>Θέσεις</h2><table><thead><tr>' +
+      '<th class="l">Μετοχή</th><th class="hide-s">Τιμή</th><th class="hide-s">Ημέρα</th><th>Αξία</th><th class="hide-s">Τεμάχια</th><th class="hide-s">Μέση τιμή αγοράς</th><th>Κ/Ζ</th><th class="hide-s">Βάρος</th>' +
+      "</tr></thead><tbody>" +
+      H.list.map(function (h) {
+        var name = h.row && h.row.name ? "<span>" + esc(h.row.name) + "</span>" : "";
+        return '<tr tabindex="0" data-pfs="' + esc(h.sym) + '"><td class="l"><div class="who">' + monoHtml(h.sym) + "<div><b>" + esc(h.sym) + "</b>" + name + '</div></div></td>' +
+          '<td class="num price hide-s">' + nf.format(h.price) + " €</td><td class=\"hide-s\">" + (h.row ? chgHtml(h.row.chg) : "—") + "</td>" +
+          '<td class="num"><div class="price">' + eur(h.value) + '</div></td>' +
+          '<td class="num hide-s">' + fmtQty(h.qty) + '</td><td class="num hide-s">' + nf.format(h.avg) + " €</td>" +
+          "<td>" + eurS(h.pl) + '<div class="note num">' + sgn(h.plPct) + nf2.format(Math.abs(h.plPct)) + "%</div></td>" +
+          '<td class="num hide-s">' + nf2.format(h.weight) + "%</td></tr>";
+      }).join("") + "</tbody></table></div>" : '<div class="panel pempty"><h3>Δεν έχεις ανοιχτές θέσεις</h3><p>Όλες οι μετοχές έχουν πουληθεί. Το πραγματοποιημένο κέρδος ή η ζημιά φαίνεται στη σύνοψη.</p></div>';
+    var hist = '<div class="panel tablewrap pf-panel"><h2>Συναλλαγές</h2><table><thead><tr><th class="l hide-s">Ημερομηνία</th><th class="l">Είδος</th><th class="l">Μετοχή</th><th class="hide-s">Τεμάχια</th><th class="hide-s">Τιμή</th><th>Σύνολο</th><th><span style="position:absolute;left:-9999px">Ενέργειες</span></th></tr></thead><tbody>' +
+      txns.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0); }).map(function (t) {
+        return '<tr><td class="l num hide-s">' + fmtDate(t.date) + '</td><td class="l"><span class="side ' + (t.side === "sell" ? "sell" : "buy") + '">' + (t.side === "sell" ? "Πώληση" : "Αγορά") + '</span></td><td class="l"><b>' + esc(t.sym) + '</b></td><td class="num hide-s">' + fmtQty(t.qty) + '</td><td class="num hide-s">' + nf.format(t.price) + ' €</td><td class="num">' + eur(t.qty * t.price) + '</td><td><button type="button" class="xbtn" data-del="' + esc(t.id) + '" aria-label="Διαγραφή συναλλαγής ' + esc(t.sym) + " " + fmtDate(t.date) + '">Διαγραφή</button></td></tr>';
+      }).join("") + "</tbody></table></div>";
+    pfBody.innerHTML = stats + alloc + table + hist + '<p class="foot">Το κόστος υπολογίζεται με τη μέση τιμή αγοράς. Οι αξίες χρησιμοποιούν τις τιμές του στιγμιότυπου της σελίδας και δεν ανανεώνονται αυτόματα. Είναι εικονικό χαρτοφυλάκιο για παρακολούθηση, όχι επενδυτική συμβουλή.</p>';
+  }
+  pfBody.addEventListener("click", function (e) {
+    if (e.target.closest('[data-act="add"]')) { openForm("", "buy"); return; }
+    var del = e.target.closest("[data-del]");
+    if (del) {
+      var id = del.getAttribute("data-del");
+      if (del.getAttribute("data-armed") !== "1") {
+        del.setAttribute("data-armed", "1"); del.textContent = "Επιβεβαίωση"; del.classList.add("danger");
+        setTimeout(function () { if (document.body.contains(del)) { del.removeAttribute("data-armed"); del.textContent = "Διαγραφή"; del.classList.remove("danger"); } }, 3500);
+        return;
+      }
+      txns = txns.filter(function (t) { return t.id !== id; });
+      renderPortfolio(); persist(); toast("Η συναλλαγή διαγράφηκε");
+      return;
+    }
+    var tr = e.target.closest("[data-pfs]");
+    if (tr) openStock(tr.getAttribute("data-pfs"), tr);
+  });
+  pfBody.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    var tr = e.target.closest("[data-pfs]"); if (tr) openStock(tr.getAttribute("data-pfs"), tr);
+  });
+
+  /* form */
+  var form = document.getElementById("pf-form");
+  var fSym = document.getElementById("pf-sym"), fQty = document.getElementById("pf-qty"), fPrice = document.getElementById("pf-price"), fDate = document.getElementById("pf-date"), fTotal = document.getElementById("pf-total"), fErr = document.getElementById("pf-err");
+  var side = "buy";
+  document.getElementById("pf-syms").innerHTML = rows.slice().sort(function (a, b) { return a.sym.localeCompare(b.sym, "el"); }).map(function (r) {
+    return '<option value="' + esc(r.sym) + (r.name ? " — " + esc(r.name) : "") + '"></option>';
+  }).join("");
+  function today() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function num(v) { v = String(v || "").trim().replace(/\s/g, ""); if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g, ""); v = v.replace(",", "."); var n = parseFloat(v); return /^-?\d*\.?\d+$/.test(v) ? n : NaN; }
+  function findSym(v) {
+    v = String(v || "").split(" — ")[0].trim().toUpperCase();
+    if (BYSYM[v]) return BYSYM[v];
+    var low = v.toLowerCase();
+    var hit = rows.filter(function (r) { return r.name && r.name.toLowerCase() === low; })[0];
+    return hit || null;
+  }
+  function setSide(s) {
+    side = s;
+    Array.prototype.forEach.call(form.querySelectorAll(".seg button"), function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-side") === s); });
+    document.getElementById("pf-submit").textContent = s === "sell" ? "Καταχώρηση πώλησης" : "Καταχώρηση αγοράς";
+    updTotal();
+  }
+  function updTotal() {
+    var q = num(fQty.value), p = num(fPrice.value);
+    fTotal.value = q > 0 && p > 0 ? eur(q * p) : "";
+    var r = findSym(fSym.value);
+    if (side === "sell" && r) { var held = heldQty(r.sym); fErr.textContent = held ? "" : ""; fQty.placeholder = held ? "έως " + fmtQty(held) : "δεν έχεις τεμάχια"; }
+    else fQty.placeholder = "π.χ. 100";
+  }
+  function openForm(sym, s) {
+    form.hidden = false; fErr.textContent = "";
+    var r = sym ? BYSYM[sym] : null;
+    fSym.value = r ? r.sym + (r.name ? " — " + r.name : "") : "";
+    fQty.value = ""; fPrice.value = r ? String(r.price).replace(".", ",") : ""; fDate.value = today();
+    setSide(s || "buy");
+    (r ? fQty : fSym).focus();
+    form.scrollIntoView({ block: "nearest" });
+  }
+  function closeForm() { form.hidden = true; document.getElementById("pf-add").focus(); }
+  document.getElementById("pf-add").addEventListener("click", function () { if (form.hidden) openForm("", "buy"); else closeForm(); });
+  document.getElementById("pf-cancel").addEventListener("click", closeForm);
+  form.querySelector(".seg").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) setSide(b.getAttribute("data-side")); });
+  fSym.addEventListener("change", function () {
+    var r = findSym(fSym.value);
+    if (r) { fSym.value = r.sym + (r.name ? " — " + r.name : ""); if (!fPrice.value) fPrice.value = String(r.price).replace(".", ","); }
+    updTotal();
+  });
+  [fQty, fPrice].forEach(function (i) { i.addEventListener("input", updTotal); });
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = findSym(fSym.value), q = num(fQty.value), p = num(fPrice.value), d = fDate.value || today();
+    if (!r) { fErr.textContent = "Διάλεξε μετοχή από τη λίστα, π.χ. ΕΤΕ."; fSym.focus(); return; }
+    if (!(q > 0)) { fErr.textContent = "Γράψε πόσα τεμάχια, έναν θετικό αριθμό."; fQty.focus(); return; }
+    if (!(p > 0)) { fErr.textContent = "Γράψε την τιμή ανά μετοχή, π.χ. 12,50."; fPrice.focus(); return; }
+    if (side === "sell") {
+      var held = heldQty(r.sym);
+      if (q > held + 1e-9) { fErr.textContent = held ? "Έχεις μόνο " + fmtQty(held) + " τεμάχια " + r.sym + "." : "Δεν έχεις τεμάχια " + r.sym + " για πώληση."; fQty.focus(); return; }
+    }
+    txns.push({ id: "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), side: side, sym: r.sym, qty: q, price: p, date: d, ts: Date.now() });
+    renderPortfolio(); persist();
+    toast((side === "sell" ? "Καταχωρήθηκε πώληση " : "Καταχωρήθηκε αγορά ") + fmtQty(q) + " " + r.sym);
+    form.hidden = true;
+    document.getElementById("pf-add").focus();
+  });
+
+  var toastEl = document.getElementById("toast"), toastT = 0;
+  function toast(msg) { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { toastEl.hidden = true; }, 2600); }
+
+  /* views */
+  function showView(v) {
+    ["market", "portfolio"].forEach(function (k) {
+      document.getElementById("view-" + k).hidden = k !== v;
+      document.getElementById("tab-" + k).setAttribute("aria-selected", k === v);
+    });
+    if (v === "portfolio") renderPortfolio();
+  }
+  document.querySelector(".views").addEventListener("click", function (e) { var b = e.target.closest(".viewbtn"); if (b) showView(b.getAttribute("data-view")); });
+  setStorageNote();
+  renderPortfolio();
+  if (location.hash === "#portfolio") showView("portfolio");
+
+  render();
+})();
+</script>
+
+</body>
+</html>
