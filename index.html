@@ -264,8 +264,9 @@ button.acct:hover { border-color: var(--accent); }
 .alinks { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .privacy { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 0; }
 .toprow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.langbtn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; height: 36px; min-width: 44px; padding: 0 12px; cursor: pointer; font: inherit; font-weight: 600; letter-spacing: .04em; }
+.langbtn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; height: 36px; min-width: 44px; padding: 0 12px; cursor: pointer; font: inherit; font-weight: 600; letter-spacing: .04em; }
 .langbtn:hover { border-color: var(--accent); }
+.langbtn svg { flex: none; color: var(--accent); }
 @media (max-width: 640px) { .toprow { justify-content: flex-start; } }
 #pf-body { display: flex; flex-direction: column; gap: 20px; }
 .pf-panel > h2 { font-size: 15px; font-weight: 700; padding: 14px 16px 6px; }
@@ -991,7 +992,7 @@ if (LANG === "en") {
 (function () {
   var b = document.getElementById("langbtn");
   if (!b) return;
-  b.textContent = LANG === "en" ? "ΕΛ" : "EN";
+  b.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5c2.6 2.6 4 6 4 9.5s-1.4 6.9-4 9.5c-2.6-2.6-4-6-4-9.5s1.4-6.9 4-9.5z"/></svg><span>' + (LANG === "en" ? "ΕΛ" : "EN") + "</span>";
   b.setAttribute("aria-label", LANG === "en" ? "Ελληνικά" : "English");
   b.title = LANG === "en" ? "Ελληνικά" : "English";
   b.addEventListener("click", function () {
