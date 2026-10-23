@@ -263,6 +263,10 @@ button.acct:hover { border-color: var(--accent); }
 .amsg.err { color: var(--down); } .amsg.ok { color: var(--up); }
 .alinks { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .privacy { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 0; }
+.toprow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.langbtn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; height: 36px; min-width: 44px; padding: 0 12px; cursor: pointer; font: inherit; font-weight: 600; letter-spacing: .04em; }
+.langbtn:hover { border-color: var(--accent); }
+@media (max-width: 640px) { .toprow { justify-content: flex-start; } }
 #pf-body { display: flex; flex-direction: column; gap: 20px; }
 .pf-panel > h2 { font-size: 15px; font-weight: 700; padding: 14px 16px 6px; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 500; z-index: 30; max-width: calc(100% - 32px); }
@@ -279,7 +283,10 @@ button.acct:hover { border-color: var(--accent); }
       <span class="pill" id="pill">Στιγμιότυπο</span>
     </div>
     <div class="topright">
-      <div class="acct" id="acct" aria-live="polite"><span class="ic" aria-hidden="true">?</span><span class="as">Έλεγχος λογαριασμού…</span></div>
+      <div class="toprow">
+        <button type="button" class="langbtn" id="langbtn">EN</button>
+        <div class="acct" id="acct" aria-live="polite"><span class="ic" aria-hidden="true">?</span><span class="as">Έλεγχος λογαριασμού…</span></div>
+      </div>
       <div class="asof" id="asof">Πηγές: capital.gr, euro2day.gr</div>
     </div>
   </header>
@@ -332,7 +339,7 @@ button.acct:hover { border-color: var(--accent); }
     </div>
     <button type="button" class="more" id="more" hidden></button>
     <p class="foot" id="histnote"></p>
-    <p class="foot">Η λίστα περιλαμβάνει και μετοχές με μηδενική κίνηση, χαμηλής εμπορευσιμότητας ή σε αναστολή. Η κεφαλαιοποίηση υπάρχει για τις εταιρείες της λίστας του euro2day και λείπει (—) από τις υπόλοιπες. Δεν υπάρχουν όγκος και ιστορικό τιμών στις πηγές, γι' αυτό δεν εμφανίζονται. Έλεγξε τιμές στις πηγές πριν στηριχτείς σε αυτές.</p>
+    <p class="foot">Η λίστα περιλαμβάνει και μετοχές με μηδενική κίνηση, χαμηλής εμπορευσιμότητας ή σε αναστολή. Η κεφαλαιοποίηση υπάρχει για τις εταιρείες της λίστας του euro2day και λείπει (—) από τις υπόλοιπες. Ο όγκος είναι τα τεμάχια που άλλαξαν χέρια σήμερα. Έλεγξε τιμές στις πηγές πριν στηριχτείς σε αυτές.</p>
   </section>
   </div>
 
@@ -686,6 +693,313 @@ YKNOT;1.3150;-2.59;49558419.00;Y/KNOT;31180;13:09
 </script>
 
 <script>
+/* ===== γλώσσα / language ===== */
+var LANG = (function () {
+  try { var s = localStorage.getItem("agora-lang"); if (s === "el" || s === "en") return s; } catch (e) {}
+  return /^el\b/i.test(navigator.language || "el") ? "el" : "en";
+})();
+var LOC = LANG === "en" ? "en-GB" : "el-GR";
+document.documentElement.lang = LANG;
+
+var EN_EXACT = {
+  "Αγορά Αθηνών": "Athens Market",
+  "Στιγμιότυπο": "Snapshot",
+  "Καθυστέρηση 15′": "15′ delay",
+  "Αγορά κλειστή": "Market closed",
+  "Καθυστερεί": "Delayed",
+  "Χαρτοφυλάκιο": "Portfolio",
+  "Ενότητες": "Sections",
+  "Κεφαλαιοποίηση αγοράς": "Market cap",
+  "Γενικός Δείκτης": "General Index",
+  "Μεταβολή σήμερα": "Change today",
+  "σταθμισμένη με την κεφαλαιοποίηση": "cap-weighted",
+  "Σύνοψη αγοράς": "Market summary",
+  "Κορυφαίες κινήσεις": "Top movers",
+  "Κορυφαίες άνοδοι (αξία από 50 εκ. €)": "Top gainers (value over €50m)",
+  "Κορυφαίες πτώσεις (αξία από 50 εκ. €)": "Top losers (value over €50m)",
+  "Μεγαλύτερες εταιρείες": "Largest companies",
+  "Κλάδοι": "Sectors",
+  "Η κατηγοριοποίηση είναι δική μου και όχι η επίσημη του ATHEX.": "Sector grouping is our own, not the official ATHEX classification.",
+  "Όλοι οι κλάδοι": "All sectors",
+  "Τράπεζες": "Banks",
+  "Χρηματοοικονομικά": "Financials",
+  "Ενέργεια": "Energy",
+  "Κοινής ωφελείας": "Utilities",
+  "Τεχνολογία & Τηλεπικοινωνίες": "Technology & Telecoms",
+  "Ακίνητα": "Real estate",
+  "Ναυτιλία & Μεταφορές": "Shipping & Transport",
+  "Κατασκευές & Υλικά": "Construction & Materials",
+  "Βιομηχανία": "Industrials",
+  "Καταναλωτικά & Λιανικό": "Consumer & Retail",
+  "Τουρισμός & Παιχνίδια": "Tourism & Gaming",
+  "Υγεία": "Health",
+  "Λοιπές": "Other",
+  "Όλες οι μετοχές": "All stocks",
+  "Φίλτρο κίνησης": "Movement filter",
+  "Αναζήτηση συμβόλου ή ονόματος": "Search symbol or name",
+  "Αγαπημένα": "Favourites",
+  "Μετοχή": "Stock",
+  "Τιμή": "Price",
+  "Ημέρα %": "Day %",
+  "Ημέρα": "Day",
+  "7 ημέρες %": "7d %",
+  "7 ημέρες": "7 days",
+  "Κεφαλαιοποίηση": "Market cap",
+  "Όγκος (τεμ.)": "Volume (shares)",
+  "Τάση": "Trend",
+  "Τάση σήμερα": "Trend today",
+  "Τάση (ιστορικό)": "Trend (history)",
+  "Κίνηση −10% έως +10%": "Move −10% to +10%",
+  "Καμία μετοχή δεν ταιριάζει.": "No stocks match.",
+  "Πάτα ☆ δίπλα σε μια μετοχή για να την προσθέσεις στα αγαπημένα.": "Tap ☆ next to a stock to add it to your favourites.",
+  "Χρηματιστήριο Αθηνών": "Athens Stock Exchange",
+  "σήμερα": "today",
+  "Σήμερα": "Today",
+  "Ιστορικό": "History",
+  "Γράφημα": "Chart",
+  "Γράφημα τιμής": "Price chart",
+  "Το γράφημα της ημέρας εμφανίζεται μετά από δύο ενημερώσεις τιμών.": "Today's chart appears after two price updates.",
+  "Το ιστορικό συλλέγεται καθημερινά. Το γράφημα εμφανίζεται από τη δεύτερη ημέρα.": "History is collected daily. The chart appears from the second day.",
+  "Κλάδος": "Sector",
+  "Προηγ. κλείσιμο (υπολογισμός)": "Prev. close (calculated)",
+  "Μεταβολή": "Change",
+  "Όγκος σήμερα": "Volume today",
+  "Καμία συναλλαγή": "No trades",
+  "Τζίρος (περίπου)": "Turnover (approx.)",
+  "Τελευταία συναλλαγή": "Last trade",
+  "Μερίδιο αγοράς": "Market share",
+  "Θέση ως προς την αξία": "Rank by value",
+  "Θέση ως προς τη μεταβολή": "Rank by change",
+  "+ Στο χαρτοφυλάκιο": "+ Add to portfolio",
+  "☆ Προσθήκη στα αγαπημένα": "☆ Add to favourites",
+  "★ Στα αγαπημένα": "★ In favourites",
+  "Τιμές με καθυστέρηση 15 λεπτών. Δεν αποτελεί επενδυτική πληροφόρηση.": "Prices delayed by 15 minutes. Not investment advice.",
+  "Κλείσιμο": "Close",
+  "Στο χαρτοφυλάκιο:": "In portfolio:",
+  "Το χαρτοφυλάκιό μου": "My portfolio",
+  "+ Προσθήκη συναλλαγής": "+ Add transaction",
+  "Είδος συναλλαγής": "Transaction type",
+  "Πώληση": "Sell",
+  "Εικονικές συναλλαγές, χωρίς χρήματα.": "Virtual trades, no real money.",
+  "Τεμάχια": "Shares",
+  "Τιμή ανά μετοχή (€)": "Price per share (€)",
+  "Ημερομηνία": "Date",
+  "Σύνολο": "Total",
+  "Γράψε σύμβολο ή όνομα, π.χ. ΕΤΕ": "Type a symbol or name, e.g. ΕΤΕ",
+  "π.χ. 100": "e.g. 100",
+  "τρέχουσα τιμή": "current price",
+  "δεν έχεις τεμάχια": "you hold none",
+  "Άκυρο": "Cancel",
+  "Καταχώρηση αγοράς": "Record buy",
+  "Καταχώρηση πώλησης": "Record sell",
+  "Διάλεξε μετοχή από τη λίστα, π.χ. ΕΤΕ.": "Pick a stock from the list, e.g. ΕΤΕ.",
+  "Γράψε πόσα τεμάχια, έναν θετικό αριθμό.": "Enter the number of shares, a positive number.",
+  "Γράψε την τιμή ανά μετοχή, π.χ. 12,50.": "Enter the price per share, e.g. 12.50.",
+  "Σύνοψη χαρτοφυλακίου": "Portfolio summary",
+  "Τρέχουσα αξία": "Current value",
+  "Μη πραγματοποιημένο Κ/Ζ": "Unrealised P/L",
+  "Συνολικό Κ/Ζ": "Total P/L",
+  "Κατανομή": "Allocation",
+  "Κατανομή χαρτοφυλακίου": "Portfolio allocation",
+  "βάρος κάθε μετοχής στην αξία": "weight of each stock by value",
+  "Θέσεις": "Holdings",
+  "Αξία": "Value",
+  "Μέση τιμή αγοράς": "Avg. buy price",
+  "Κ/Ζ": "P/L",
+  "Βάρος": "Weight",
+  "Συναλλαγές": "Transactions",
+  "Είδος": "Type",
+  "Ενέργειες": "Actions",
+  "Διαγραφή": "Delete",
+  "Επιβεβαίωση": "Confirm",
+  "Το χαρτοφυλάκιο είναι άδειο": "Your portfolio is empty",
+  "Πρόσθεσε μια εικονική αγορά για να παρακολουθείς αξία, κέρδος και κατανομή με τις τιμές της σελίδας. Μπορείς επίσης να πατήσεις μια μετοχή στην Αγορά και «+ Στο χαρτοφυλάκιο».": "Add a virtual buy to track value, profit and allocation at the prices on this page. You can also tap a stock in Market and choose “+ Add to portfolio”.",
+  "+ Προσθήκη πρώτης συναλλαγής": "+ Add your first transaction",
+  "Δεν έχεις ανοιχτές θέσεις": "You have no open holdings",
+  "Όλες οι μετοχές έχουν πουληθεί. Το πραγματοποιημένο κέρδος ή η ζημιά φαίνεται στη σύνοψη.": "All stocks have been sold. Realised profit or loss is shown in the summary.",
+  "Το κόστος υπολογίζεται με τη μέση τιμή αγοράς. Οι αξίες υπολογίζονται με τις τιμές της σελίδας (καθυστέρηση 15 λεπτών). Είναι εικονικό χαρτοφυλάκιο για παρακολούθηση, όχι επενδυτική συμβουλή.": "Cost uses the average buy price. Values use the prices on this page (15-minute delay). This is a virtual portfolio for tracking, not investment advice.",
+  "Η συναλλαγή διαγράφηκε": "Transaction deleted",
+  "Οι καταχωρήσεις αποθηκεύονται στον λογαριασμό σου και τις βλέπεις μόνο εσύ.": "Your entries are saved to your account and only you can see them.",
+  "Συνδέθηκες, αλλά η αποθήκευση στον λογαριασμό δεν είναι ακόμα ενεργή. Οι καταχωρήσεις μένουν σε αυτόν τον browser.": "You are signed in, but saving to your account is not active yet. Entries stay in this browser.",
+  "Οι καταχωρήσεις αποθηκεύονται μόνο σε αυτόν τον browser. Συνδέσου για να τις βλέπεις από κάθε συσκευή.": "Entries are saved in this browser only. Sign in to see them on every device.",
+  "Οι καταχωρήσεις αποθηκεύονται μόνο σε αυτόν τον browser.": "Entries are saved in this browser only.",
+  "Οι καταχωρήσεις αποθηκεύονται σε αυτόν τον browser.": "Entries are saved in this browser.",
+  "Ο χώρος αποθήκευσης γέμισε. Σβήσε κάποιες συναλλαγές.": "Storage is full. Delete some transactions.",
+  "Η αποθήκευση στον λογαριασμό απέτυχε. Κρατήθηκε σε αυτόν τον browser.": "Saving to your account failed. Kept in this browser.",
+  "Οι συναλλαγές αυτού του browser μεταφέρθηκαν στον λογαριασμό σου": "This browser's transactions were moved to your account",
+  "Σύνδεση / Εγγραφή": "Sign in / Sign up",
+  "Συνδεδεμένος": "Signed in",
+  "Επισκέπτης": "Guest",
+  "· χωρίς λογαριασμό": "· no account",
+  "Έλεγχος λογαριασμού…": "Checking account…",
+  "Φόρτωση…": "Loading…",
+  "Η σύνδεση δεν είναι διαθέσιμη τώρα": "Sign-in is unavailable right now",
+  "Ο λογαριασμός μου": "My account",
+  "Ο λογαριασμός σου": "Your account",
+  "Συνδέσου για να βλέπεις το χαρτοφυλάκιό σου από κάθε συσκευή": "Sign in to see your portfolio on every device",
+  "Το χαρτοφυλάκιο αποθηκεύεται μόνο σε αυτόν τον browser.": "The portfolio is saved in this browser only.",
+  "Το χαρτοφυλάκιό σου αποθηκεύεται στον λογαριασμό σου.": "Your portfolio is saved to your account.",
+  "Σύνδεση": "Sign in",
+  "Δημιουργία λογαριασμού": "Create account",
+  "Συνδέσου για να βλέπεις το χαρτοφυλάκιο και τα αγαπημένα σου από κάθε συσκευή.": "Sign in to see your portfolio and favourites on every device.",
+  "Με λογαριασμό βλέπεις το χαρτοφυλάκιο και τα αγαπημένα σου από κάθε συσκευή.": "With an account you see your portfolio and favourites on every device.",
+  "Συνέχεια με Google": "Continue with Google",
+  "ή με email": "or with email",
+  "Κωδικός": "Password",
+  "Κωδικός (τουλάχιστον 6 χαρακτήρες)": "Password (at least 6 characters)",
+  "Νέος χρήστης; Εγγραφή": "New user? Sign up",
+  "Έχεις ήδη λογαριασμό; Σύνδεση": "Already have an account? Sign in",
+  "Ξέχασα τον κωδικό": "Forgot password",
+  "Γράψε το email σου και θα σου στείλουμε σύνδεσμο για νέο κωδικό.": "Enter your email and we will send you a link to set a new password.",
+  "Αποστολή συνδέσμου": "Send link",
+  "← Πίσω στη σύνδεση": "← Back to sign in",
+  "Αποσύνδεση": "Sign out",
+  "Διαγραφή λογαριασμού": "Delete account",
+  "Πάτα ξανά για οριστική διαγραφή": "Tap again to delete permanently",
+  "Θα σβηστούν ο λογαριασμός, το χαρτοφυλάκιο και τα αγαπημένα σου. Δεν αναιρείται.": "Your account, portfolio and favourites will be deleted. This cannot be undone.",
+  "Αποθηκεύουμε μόνο το email σου (ή το όνομα του λογαριασμού Google) και τις εικονικές συναλλαγές και τα αγαπημένα σου, ώστε να τα βλέπεις από κάθε συσκευή. Δεν τα βλέπει κανείς άλλος και δεν χρησιμοποιούνται για διαφήμιση. Μπορείς να διαγράψεις τον λογαριασμό σου όποτε θες από αυτό εδώ το παράθυρο.": "We store only your email (or Google account name) and your virtual transactions and favourites, so you can see them on every device. No one else sees them and they are not used for advertising. You can delete your account at any time from this window.",
+  "Συνδέθηκες": "Signed in",
+  "Αποσυνδέθηκες": "Signed out",
+  "Ο λογαριασμός δημιουργήθηκε": "Account created",
+  "Ο λογαριασμός διαγράφηκε": "Account deleted",
+  "Το email δεν είναι σωστό.": "The email address is not valid.",
+  "Γράψε το email σου.": "Enter your email.",
+  "Γράψε τον κωδικό σου.": "Enter your password.",
+  "Λάθος email ή κωδικός.": "Wrong email or password.",
+  "Υπάρχει ήδη λογαριασμός με αυτό το email. Πάτα «Σύνδεση».": "An account with this email already exists. Choose “Sign in”.",
+  "Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες.": "The password must have at least 6 characters.",
+  "Πολλές προσπάθειες. Δοκίμασε ξανά σε λίγα λεπτά.": "Too many attempts. Try again in a few minutes.",
+  "Η σύνδεση με Google δεν έχει ενεργοποιηθεί ακόμα για αυτό το site.": "Google sign-in is not enabled for this site yet.",
+  "Αυτός ο τρόπος σύνδεσης δεν έχει ενεργοποιηθεί ακόμα.": "This sign-in method is not enabled yet.",
+  "Δεν υπάρχει σύνδεση στο internet. Δοκίμασε ξανά.": "No internet connection. Try again.",
+  "Για λόγους ασφαλείας, αποσυνδέσου, συνδέσου ξανά και δοκίμασε πάλι.": "For security, sign out, sign in again and retry.",
+  "Υπάρχει ήδη λογαριασμός με αυτό το email. Συνδέσου με email και κωδικό.": "An account with this email already exists. Sign in with email and password.",
+  "Οι ρυθμίσεις σύνδεσης του site δεν είναι σωστές.": "The site's sign-in settings are not correct.",
+  "Αν υπάρχει λογαριασμός με αυτό το email, σου στείλαμε σύνδεσμο. Δες και στα ανεπιθύμητα.": "If an account exists for this email, we sent you a link. Check your spam folder too.",
+  "Τιμές με καθυστέρηση 15 λεπτών.": "Prices delayed by 15 minutes.",
+  "Η αγορά είναι κλειστή.": "The market is closed.",
+  "Οι τιμές καθυστερούν.": "Prices are delayed.",
+  "Στιγμιότυπο.": "Snapshot.",
+  "Εθνική Τράπεζα": "National Bank of Greece",
+  "Τράπεζα Πειραιώς": "Piraeus Bank",
+  "Τέρνα Ενεργειακή": "Terna Energy",
+  "Κρι Κρι": "Kri Kri",
+  "Γεκτέρνα": "GEK Terna",
+  "Διεθνής Αερολιμένας Αθηνών": "Athens International Airport",
+  "ΑΔΜΗΕ Συμμετοχών": "ADMIE Holding",
+  "Ιατρικό Αθηνών": "Athens Medical Group",
+  "Λάμψα": "Lampsa",
+  "Ευρωπαϊκή Πίστη": "European Reliance",
+  "Εκτέρ": "Ekter",
+  "Ελλάκτωρ": "Ellaktor",
+  "Δομική Κρήτης": "Domiki Kritis",
+  "Βιοκαρπέτ": "Biokarpet",
+  "Μαθιός Πυρίμαχα": "Mathios Refractory",
+  "Χαϊδεμένος": "Haidemenos",
+  "Μπλε Κέδρος": "Mple Kedros",
+  "Πετρόπουλος": "Petropoulos",
+  "Allwyn (πρώην ΟΠΑΠ)": "Allwyn (formerly OPAP)"
+};
+var EN_RX = [
+  [/^Ενημέρωση: (.+)$/, "Updated: $1"],
+  [/^Εμφάνιση περισσότερων \((\d+) ακόμα\)$/, "Show more ($1 more)"],
+  [/^Το ιστορικό τιμών καταγράφεται από (\S+) \((\d+) ημέρ(?:α|ες)\)\. Η στήλη «7 ημέρες» γεμίζει μόλις συμπληρωθεί μία εβδομάδα\.$/, "Price history is recorded since $1 ($2 day(s)). The “7d” column fills once a week has passed."],
+  [/^Συνδεδεμένος ως (.+)$/, "Signed in as $1"],
+  [/^Αγαπημένο: (.+)$/, "Favourite: $1"],
+  [/^Διαγραφή συναλλαγής (.+)$/, "Delete transaction $1"],
+  [/^Κάτι πήγε στραβά\. Δοκίμασε ξανά(.*)\.$/, "Something went wrong. Try again$1."],
+  [/^Έχεις μόνο (\S+) τεμάχια (.+)\.$/, "You only have $1 shares of $2."],
+  [/^Δεν έχεις τεμάχια (.+) για πώληση\.$/, "You have no shares of $1 to sell."],
+  [/^Καταχωρήθηκε αγορά (\S+) (.+)$/, "Recorded buy: $1 $2"],
+  [/^Καταχωρήθηκε πώληση (\S+) (.+)$/, "Recorded sell: $1 $2"],
+  [/^έως (.+)$/, "up to $1"],
+  [/^(\S+) από (\S+)$/, "$1 of $2"],
+  [/^Άνοδοι (\d+), πτώσεις (\d+), αμετάβλητες (\d+)$/, "Up $1, down $2, unchanged $3"]
+];
+var EN_SUB = [
+  ["Οι τιμές ενημερώνονται αυτόματα κάθε 15 λεπτά στις ώρες συνεδρίασης (10:15–17:20). Πηγές: capital.gr (τιμές), euro2day.gr (κεφαλαιοποίηση). Δεν αποτελεί επενδυτική πληροφόρηση.", "Prices update automatically every 15 minutes during trading hours (10:15–17:20 Athens time). Sources: capital.gr (prices), euro2day.gr (market cap). Not investment advice."],
+  ["Κανονικά ενημερώνονται κάθε 15 λεπτά, οπότε οι τιμές που βλέπεις μπορεί να μην είναι οι τρέχουσες. Δεν αποτελεί επενδυτική πληροφόρηση.", "They normally update every 15 minutes, so the prices you see may not be current. Not investment advice."],
+  ["Οι τιμές προέρχονται από το capital.gr (καθυστέρηση 15 λεπτών) και η κεφαλαιοποίηση με τα ονόματα από το euro2day.gr", "Prices come from capital.gr (15-minute delay) and market cap and names from euro2day.gr"],
+  ["Τα στοιχεία δεν ενημερώνονται αυτόματα και δεν αποτελούν επενδυτική πληροφόρηση.", "This data does not update automatically and is not investment advice."],
+  ["Η λίστα περιλαμβάνει και μετοχές με μηδενική κίνηση, χαμηλής εμπορευσιμότητας ή σε αναστολή.", "The list also includes stocks with no movement, low liquidity or suspended trading."],
+  ["Η κεφαλαιοποίηση υπάρχει για τις εταιρείες της λίστας του euro2day και λείπει (—) από τις υπόλοιπες.", "Market cap is available for companies on euro2day's list and missing (—) for the rest."],
+  ["Ο όγκος είναι τα τεμάχια που άλλαξαν χέρια σήμερα.", "Volume is the number of shares traded today."],
+  ["Έλεγξε τιμές στις πηγές πριν στηριχτείς σε αυτές.", "Check prices at the sources before relying on them."],
+  ["Η τελευταία ενημέρωση ήταν", "The last update was"],
+  ["Τελευταία ενημέρωση:", "Last update:"],
+  ["Τελευταίες τιμές:", "Last prices:"],
+  ["Εύρος αγοράς σήμερα", "Market breadth today"],
+  ["Μόνο με συναλλαγές σήμερα", "Traded today only"],
+  ["εταιρείες με γνωστή αξία", "companies with known value"],
+  ["αμετάβλητες με συναλλαγές", "unchanged (traded)"],
+  ["χωρίς συναλλαγές", "not traded"],
+  ["αμετάβλητες", "unchanged"],
+  ["★ Αγαπημένα", "★ Favourites"],
+  ["Αμετάβλητες", "Unchanged"],
+  ["Σε άνοδο", "Up"],
+  ["Σε πτώση", "Down"],
+  ["σε άνοδο", "up"],
+  ["σε πτώση", "down"],
+  ["πραγματοποιημένο", "realised"],
+  ["σε κόστος", "on cost"],
+  ["μον. · τζίρος", "pts · turnover"],
+  ["Όλες", "All"],
+  ["μετοχές", "stocks"],
+  ["μετοχή", "stock"],
+  [" δισ. €", " bn €"],
+  [" εκ. €", " m €"],
+  [" τεμ.", " sh."],
+  [" εκ.", " m"],
+  [" χιλ.", " k"],
+  ["· αξία", "· value"]
+];
+EN_SUB.sort(function (a, b) { return b[0].length - a[0].length; });
+var HAS_GR = /[Α-Ωα-ωάέήίόύώΆΈΉΊΌΎΏϊϋΐΰ]/;
+function trText(t, el) {
+  if (!t || !HAS_GR.test(t)) return t;
+  var m = t.match(/^(\s*)([\s\S]*?)(\s*)$/), core = m[2], out;
+  if (core === "Αγορά") out = el && el.closest && el.closest(".viewbtn") ? "Market" : "Buy";
+  else if (Object.prototype.hasOwnProperty.call(EN_EXACT, core)) out = EN_EXACT[core];
+  else {
+    out = core;
+    for (var i = 0; i < EN_RX.length; i++) { if (EN_RX[i][0].test(out)) { out = out.replace(EN_RX[i][0], EN_RX[i][1]); break; } }
+    for (var j = 0; j < EN_SUB.length; j++) if (out.indexOf(EN_SUB[j][0]) > -1) out = out.split(EN_SUB[j][0]).join(EN_SUB[j][1]);
+  }
+  return m[1] + out + m[3];
+}
+var TR_ATTRS = ["placeholder", "aria-label", "title"];
+function trNode(n) {
+  if (n.nodeType === 3) { var v = n.nodeValue, t = trText(v, n.parentElement); if (t !== v) n.nodeValue = t; return; }
+  if (n.nodeType !== 1 || n.tagName === "SCRIPT" || n.tagName === "STYLE" || n.tagName === "TEXTAREA") return;
+  for (var i = 0; i < TR_ATTRS.length; i++) {
+    var a = TR_ATTRS[i];
+    if (n.hasAttribute(a)) { var av = n.getAttribute(a), at = trText(av, n); if (at !== av) n.setAttribute(a, at); }
+  }
+  for (var c = n.firstChild; c; c = c.nextSibling) trNode(c);
+}
+if (LANG === "en") {
+  document.title = "Athens Market";
+  trNode(document.body);
+  new MutationObserver(function (ms) {
+    ms.forEach(function (m) {
+      if (m.type === "characterData") trNode(m.target);
+      else if (m.type === "attributes") { var v = m.target.getAttribute(m.attributeName), t = trText(v, m.target); if (t !== v) m.target.setAttribute(m.attributeName, t); }
+      else m.addedNodes.forEach(trNode);
+    });
+  }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+}
+(function () {
+  var b = document.getElementById("langbtn");
+  if (!b) return;
+  b.textContent = LANG === "en" ? "ΕΛ" : "EN";
+  b.setAttribute("aria-label", LANG === "en" ? "Ελληνικά" : "English");
+  b.title = LANG === "en" ? "Ελληνικά" : "English";
+  b.addEventListener("click", function () {
+    try { localStorage.setItem("agora-lang", LANG === "en" ? "el" : "en"); } catch (e) {}
+    location.reload();
+  });
+})();
+
 /* Από πού διαβάζονται οι ζωντανές τιμές. "data.json" = το αρχείο δίπλα στη σελίδα
    (GitHub Pages). Για άλλο site βάλε π.χ.
    "https://raw.githubusercontent.com/ΟΝΟΜΑ/agora-athinon/main/data.json".
@@ -766,8 +1080,8 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   var TREND = HDAYS.length >= 3 ? "daily" : (IT.length >= 2 ? "today" : "");
   rows.forEach(function (r) { r.w7 = w7(r); });
 
-  var nf = new Intl.NumberFormat("el-GR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  var nf2 = new Intl.NumberFormat("el-GR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var nf = new Intl.NumberFormat(LOC, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  var nf2 = new Intl.NumberFormat(LOC, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   function sgn(v) { return v > 0.004 ? "+" : v < -0.004 ? "−" : ""; }
   function cls(v) { return v > 0.004 ? "up" : v < -0.004 ? "down" : "flat"; }
   function arrow(v) { return v > 0.004 ? "▲ " : v < -0.004 ? "▼ " : ""; }
@@ -782,7 +1096,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     var w = Math.min(Math.abs(v), 10) / 10 * 50;
     return v >= 0 ? { left: 50, width: w, c: "up" } : { left: 50 - w, width: w, c: "down" };
   }
-  var nf0 = new Intl.NumberFormat("el-GR", { maximumFractionDigits: 0 });
+  var nf0 = new Intl.NumberFormat(LOC, { maximumFractionDigits: 0 });
   function compactN(v) { return v >= 1e6 ? nf2.format(v / 1e6) + " εκ." : v >= 1e4 ? nf2.format(v / 1e3) + " χιλ." : nf0.format(v); }
   function sparkHtml(pts, w, h) {
     if (!pts || pts.length < 2) return "";
@@ -1232,7 +1546,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
       .then(function () {
         firebase.initializeApp(FIREBASE_CONFIG);
         fbAuth = firebase.auth();
-        fbAuth.languageCode = "el";
+        fbAuth.languageCode = LANG;
         var fdb = firebase.firestore();
         fbAuth.getRedirectResult().catch(function (err) { var t = authErr(err); if (t) toast(t); });
         fbAuth.onAuthStateChanged(function (user) {
@@ -1315,7 +1629,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     return '<div class="panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px"><span>Στο χαρτοφυλάκιο: <b class="num">' + fmtQty(h.qty) + ' τεμ.</b> · αξία <b class="num">' + eur(h.value) + '</b></span>' + plHtml(h.pl, h.plPct) + "</div>";
   }
 
-  var nf0 = new Intl.NumberFormat("el-GR", { maximumFractionDigits: 4 });
+  var nf0 = new Intl.NumberFormat(LOC, { maximumFractionDigits: 4 });
   function fmtQty(v) { return nf0.format(v); }
   function eur(v) { return nf2.format(v) + " €"; }
   function eurS(v) { return '<span class="chg num ' + cls(v) + '">' + sgn(v) + nf2.format(Math.abs(v)) + " €</span>"; }
@@ -1362,7 +1676,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
       txns.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0); }).map(function (t) {
         return '<tr><td class="l num hide-s">' + fmtDate(t.date) + '</td><td class="l"><span class="side ' + (t.side === "sell" ? "sell" : "buy") + '">' + (t.side === "sell" ? "Πώληση" : "Αγορά") + '</span></td><td class="l"><b>' + esc(t.sym) + '</b></td><td class="num hide-s">' + fmtQty(t.qty) + '</td><td class="num hide-s">' + nf.format(t.price) + ' €</td><td class="num">' + eur(t.qty * t.price) + '</td><td><button type="button" class="xbtn" data-del="' + esc(t.id) + '" aria-label="Διαγραφή συναλλαγής ' + esc(t.sym) + " " + fmtDate(t.date) + '">Διαγραφή</button></td></tr>';
       }).join("") + "</tbody></table></div>";
-    pfBody.innerHTML = stats + alloc + table + hist + '<p class="foot">Το κόστος υπολογίζεται με τη μέση τιμή αγοράς. Οι αξίες χρησιμοποιούν τις τιμές του στιγμιότυπου της σελίδας και δεν ανανεώνονται αυτόματα. Είναι εικονικό χαρτοφυλάκιο για παρακολούθηση, όχι επενδυτική συμβουλή.</p>';
+    pfBody.innerHTML = stats + alloc + table + hist + '<p class="foot">Το κόστος υπολογίζεται με τη μέση τιμή αγοράς. Οι αξίες υπολογίζονται με τις τιμές της σελίδας (καθυστέρηση 15 λεπτών). Είναι εικονικό χαρτοφυλάκιο για παρακολούθηση, όχι επενδυτική συμβουλή.</p>';
   }
   pfBody.addEventListener("click", function (e) {
     if (e.target.closest('[data-act="add"]')) { openForm("", "buy"); return; }
@@ -1394,7 +1708,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     return '<option value="' + esc(r.sym) + (r.name ? " — " + esc(r.name) : "") + '"></option>';
   }).join("");
   function today() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-  function num(v) { v = String(v || "").trim().replace(/\s/g, ""); if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g, ""); v = v.replace(",", "."); var n = parseFloat(v); return /^-?\d*\.?\d+$/.test(v) ? n : NaN; }
+  function num(v) { v = String(v || "").trim().replace(/\s/g, ""); if (LANG === "en") { v = v.replace(/,/g, ""); return /^-?\d*\.?\d+$/.test(v) ? parseFloat(v) : NaN; } if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g, ""); v = v.replace(",", "."); var n = parseFloat(v); return /^-?\d*\.?\d+$/.test(v) ? n : NaN; }
   function findSym(v) {
     v = String(v || "").split(" — ")[0].trim().toUpperCase();
     if (BYSYM[v]) return BYSYM[v];
@@ -1419,7 +1733,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     form.hidden = false; fErr.textContent = "";
     var r = sym ? BYSYM[sym] : null;
     fSym.value = r ? r.sym + (r.name ? " — " + r.name : "") : "";
-    fQty.value = ""; fPrice.value = r ? String(r.price).replace(".", ",") : ""; fDate.value = today();
+    fQty.value = ""; fPrice.value = r ? (LANG === "en" ? String(r.price) : String(r.price).replace(".", ",")) : ""; fDate.value = today();
     setSide(s || "buy");
     (r ? fQty : fSym).focus();
     form.scrollIntoView({ block: "nearest" });
@@ -1430,7 +1744,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   form.querySelector(".seg").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) setSide(b.getAttribute("data-side")); });
   fSym.addEventListener("change", function () {
     var r = findSym(fSym.value);
-    if (r) { fSym.value = r.sym + (r.name ? " — " + r.name : ""); if (!fPrice.value) fPrice.value = String(r.price).replace(".", ","); }
+    if (r) { fSym.value = r.sym + (r.name ? " — " + r.name : ""); if (!fPrice.value) fPrice.value = (LANG === "en" ? String(r.price) : String(r.price).replace(".", ",")); }
     updTotal();
   });
   [fQty, fPrice].forEach(function (i) { i.addEventListener("input", updTotal); });
@@ -1476,7 +1790,7 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
   }
   function showLive(m) {
     var d = new Date(m.updated), ok = !isNaN(d.getTime());
-    var when = ok ? d.toLocaleString("el-GR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Athens" }) : "άγνωστη ώρα";
+    var when = ok ? d.toLocaleString(LOC, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Athens" }) : "άγνωστη ώρα";
     var age = ok ? (Date.now() - d.getTime()) / 60000 : 1e9;
     var a = athensNow();
     var open = a && ["Mon", "Tue", "Wed", "Thu", "Fri"].indexOf(a.wd) > -1 && a.min >= 10 * 60 + 15 && a.min <= 17 * 60 + 25;
