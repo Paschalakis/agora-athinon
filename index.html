@@ -12,11 +12,13 @@
 <style>
 /* Layout: sticky top bar, summary strip, two mover lists, then a sortable market table; stock detail opens in a right-hand drawer (bottom sheet on phones). */
 :root {
-  --bg: #23272e;
-  --surface: #2b3038;
+  --bg: #1f2430;
+  --bg-top: #2a3040;
+  --bg-bottom: #191d26;
+  --surface: #262c38;
   --fg: #e7eaef;
   --muted: #a3abb8;
-  --line: #3b414c;
+  --line: #363e4d;
   --accent: #8fb0ff;
   --accent-soft: #343d52;
   --up: #4fd69a;
@@ -32,7 +34,7 @@
 }
 * { box-sizing: border-box; }
 body {
-  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  background: var(--bg) linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 38%, var(--bg-bottom) 100%) fixed; color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 0 40px;
 }
