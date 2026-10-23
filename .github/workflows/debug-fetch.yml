@@ -1,0 +1,22 @@
+name: Διάγνωση πηγών (προσωρινό)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Λήψη
+        run: |
+          mkdir out && cd out
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          for p in "allstocks/?langCd=el" "allstockchanges/?langCd=el" "gdm/" "headerstocks" "updownequalstocks/" "ftseindexes/"; do
+            n=$(echo "$p" | tr -c 'a-z' '_')
+            curl -sSL -A "$UA" -H "Accept: application/json, text/javascript, */*" -H "X-Requested-With: XMLHttpRequest" -H "Referer: https://www.capital.gr/finance/allstocks" -o "api_$n.txt" -w "$p %{http_code} %{content_type} %{size_download}\n" "https://www.capital.gr/api/quotes/$p" || true
+          done | tee summary.txt
+      - name: Αποθήκευση
+        run: |
+          cd out && git init -q -b debug && git config user.name bot && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm debug && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" debug
