@@ -1,0 +1,23 @@
+name: Διάγνωση πηγών (προσωρινό)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Λήψη
+        run: |
+          mkdir out && cd out
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          H1="Accept: application/json, text/javascript, */*"; H2="X-Requested-With: XMLHttpRequest"
+          curl -sSL -A "$UA" -H "$H1" -H "$H2" -H "Referer: https://www.capital.gr/finance/allstocks" -o api_en.txt -w "api_en %{http_code} %{size_download}\n" "https://www.capital.gr/api/quotes/allstocks/?langCd=en" | tee -a summary.txt || true
+          curl -sSL -A "$UA" -o en_allstocks.html -w "en_html %{http_code} %{size_download}\n" "https://en.capital.gr/finance/allstocks" | tee -a summary.txt || true
+          curl -sSL -A "$UA" -o e2d_en.html -w "e2d_en %{http_code} %{size_download}\n" "https://www.euro2day.gr/en/AseQuotesCapitalization.aspx" | tee -a summary.txt || true
+          curl -sSL -A "$UA" -o athex_list.html -w "athex %{http_code} %{size_download}\n" "https://www.athexgroup.gr/el/market-data/listed-companies" | tee -a summary.txt || true
+      - name: Αποθήκευση
+        run: |
+          cd out && git init -q -b debug && git config user.name bot && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm debug && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" debug
