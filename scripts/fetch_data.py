@@ -36,6 +36,7 @@ ATHENS = ZoneInfo("Europe/Athens")
 
 CAPITAL_API = "https://www.capital.gr/api/quotes/allstocks/?langCd=el"
 CAPITAL_GD = "https://www.capital.gr/api/quotes/gdm/"
+CAPITAL_HEADER = "https://www.capital.gr/api/quotes/headerstocks"
 CAPITAL_URL = "https://www.capital.gr/finance/allstocks"
 EURO2DAY_URL = "https://www.euro2day.gr/AseQuotesCapitalization.aspx"
 
@@ -192,6 +193,19 @@ def general_index():
         return None
 
 
+def fx_rates():
+    """Ισοτιμίες ευρώ (π.χ. EUR/USD) από την πάνω μπάρα του capital.gr."""
+    out = {}
+    try:
+        for r in json.loads(get(CAPITAL_HEADER, API_HEADERS))["ResultData"]:
+            s = (r.get("s") or "").replace(" ", "").upper()
+            if s.startswith("EUR/") and r.get("l"):
+                out[s[4:]] = round(float(r["l"]), 5)
+    except Exception as e:
+        print("ΠΡΟΣΟΧΗ: δεν βρέθηκαν ισοτιμίες:", e)
+    return out
+
+
 # ------------------------------------------------------------------ euro2day
 def parse_euro2day(html):
     """Τετράδες: Α/Α, ΟΝΟΜΑ, ΚΩΔΙΚΟΣ, ΚΕΦΑΛΑΙΟΠΟΙΗΣΗ."""
@@ -279,6 +293,7 @@ def main():
         sys.exit(1)
 
     index = general_index()
+    fx = fx_rates() or load_json(OUT, {}).get("fx") or {}
 
     caps = {}
     try:
@@ -317,11 +332,17 @@ def main():
         "count": len(stocks),
         "traded": traded if source == "api" else None,
         "index": index,
+        "fx": fx,
         "stocks": stocks,
     }
     write_json(OUT, data)
-    days = update_history(stocks, now)
-    points = update_intraday(stocks, index, now)
+    if now.weekday() < 5:
+        days = update_history(stocks, now)
+        points = update_intraday(stocks, index, now)
+    else:
+        # Σαββατοκύριακο: δεν υπάρχει συνεδρίαση, δεν γράφουμε ιστορικό
+        days = len(load_json(HIST, {}).get("days", []))
+        points = 0
     print("ΟΚ: %d μετοχές (%s με συναλλαγές), ιστορικό %d ημέρες, %d σημεία σήμερα"
           % (len(stocks), traded if source == "api" else "?", days, points))
 
