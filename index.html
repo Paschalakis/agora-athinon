@@ -250,6 +250,8 @@ tbody tr:hover { background: var(--bg); }
 .chartbox svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
 .chartbox text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
 .readout { color: var(--muted); font-size: 13px; min-height: 20px; }
+@media (max-width: 640px) { #view-favs .starcol { display: table-cell; width: 34px; } }
+.viewbtn .cnt { display: inline-block; margin-left: 6px; min-width: 20px; padding: 1px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-family: var(--font-body); }
 .tvbox { height: 460px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
 @media (max-width: 640px) { .tvbox { height: 360px; } }
 .tvbox .tradingview-widget-copyright { font-size: 11px; padding: 6px 8px; color: var(--muted); }
@@ -315,7 +317,8 @@ button.acct:hover { border-color: var(--accent); }
   </header>
 
   <nav class="views" role="tablist" aria-label="Ενότητες">
-    <button type="button" class="viewbtn" role="tab" id="tab-market" data-view="market" aria-selected="true" aria-controls="view-market">Αγορά</button>
+    <button type="button" class="viewbtn" role="tab" id="tab-market" data-view="market" aria-selected="true" aria-controls="view-market">Μετοχές</button>
+    <button type="button" class="viewbtn" role="tab" id="tab-favs" data-view="favs" aria-selected="false" aria-controls="view-favs">Αγαπημένα<span class="cnt" id="favcnt" hidden></span></button>
     <button type="button" class="viewbtn" role="tab" id="tab-portfolio" data-view="portfolio" aria-selected="false" aria-controls="view-portfolio">Χαρτοφυλάκιο</button>
   </nav>
 
@@ -364,6 +367,28 @@ button.acct:hover { border-color: var(--accent); }
     <p class="foot" id="histnote"></p>
     <p class="foot">Η λίστα περιλαμβάνει και μετοχές με μηδενική κίνηση, χαμηλής εμπορευσιμότητας ή σε αναστολή. Η κεφαλαιοποίηση υπάρχει για τις εταιρείες της λίστας του euro2day και λείπει (—) από τις υπόλοιπες. Ο όγκος είναι τα τεμάχια που άλλαξαν χέρια σήμερα. Έλεγξε τιμές στις πηγές πριν στηριχτείς σε αυτές.</p>
   </section>
+  </div>
+
+  <div class="view" id="view-favs" role="tabpanel" aria-labelledby="tab-favs" hidden>
+    <div class="phead"><div><h2>Τα αγαπημένα μου</h2><div class="storage">Οι μετοχές που σημείωσες με ☆, για να τις βλέπεις όλες μαζί.</div></div></div>
+    <div class="panel tablewrap" id="favwrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="starcol"><span style="position:absolute;left:-9999px">Αγαπημένα</span></th>
+            <th class="l">Μετοχή</th>
+            <th>Τιμή</th>
+            <th>Ημέρα %</th>
+            <th class="hide-s">7 ημέρες %</th>
+            <th class="hide-s">Κεφαλαιοποίηση</th>
+            <th class="hide-s">Όγκος (τεμ.)</th>
+            <th class="mvcell">Τάση</th>
+          </tr>
+        </thead>
+        <tbody id="favrows"></tbody>
+      </table>
+    </div>
+    <div class="panel pempty" id="favempty" hidden><h3>Δεν έχεις αγαπημένες μετοχές</h3><p>Πάτα το ☆ δίπλα σε μια μετοχή στη λίστα «Μετοχές» ή στη σελίδα της μετοχής, και θα εμφανιστεί εδώ.</p><button type="button" class="btn primary" id="favgo">Δες τις μετοχές</button></div>
   </div>
 
   <div class="view" id="view-portfolio" role="tabpanel" aria-labelledby="tab-portfolio" hidden>
@@ -941,6 +966,12 @@ var EN_EXACT = {
   "Διάλεξε «Προσθήκη στην οθόνη Αφετηρίας» και πάτα «Προσθήκη».": "Choose “Add to Home Screen” and tap “Add”.",
   "Εντάξει": "OK",
   "Γραμμή": "Line",
+  "Μετοχές": "Stocks",
+  "Τα αγαπημένα μου": "My favourites",
+  "Οι μετοχές που σημείωσες με ☆, για να τις βλέπεις όλες μαζί.": "The stocks you marked with ☆, all in one place.",
+  "Δεν έχεις αγαπημένες μετοχές": "You have no favourite stocks",
+  "Πάτα το ☆ δίπλα σε μια μετοχή στη λίστα «Μετοχές» ή στη σελίδα της μετοχής, και θα εμφανιστεί εδώ.": "Tap ☆ next to a stock in the “Stocks” list or on the stock's page, and it will appear here.",
+  "Δες τις μετοχές": "Browse stocks",
   "Τύπος γραφήματος": "Chart type",
   "Μέγεθος": "Measure",
   "Διάστημα": "Range",
@@ -1292,12 +1323,22 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     empty.hidden = list.length > 0;
     empty.textContent = state.f === "fav" && !state.q ? "Πάτα ☆ δίπλα σε μια μετοχή για να την προσθέσεις στα αγαπημένα." : "Καμία μετοχή δεν ταιριάζει.";
     var shown = list.slice(0, state.shown);
-    document.getElementById("rows").innerHTML = shown.map(function (s, i) {
-      return '<tr tabindex="0" data-s="' + esc(s.sym) + '"><td class="starcol"><button type="button" class="star" data-star="' + esc(s.sym) + '" aria-pressed="' + !!favs[s.sym] + '" aria-label="Αγαπημένο: ' + esc(s.dsym) + '">' + (favs[s.sym] ? "★" : "☆") + '</button></td>' +
-        '<td class="l idx num hide-s">' + (s.rank || "—") + '</td><td class="l"><div class="who">' + monoHtml(s.dsym) + "<div><b>" + esc(s.dsym) + "</b>" + (s.name ? "<span>" + esc(s.name) + "</span>" : "") + "</div></div></td>" +
-        '<td class="num price">' + nf.format(s.price) + " €</td><td>" + chgHtml(s.chg) + '</td><td class="hide-s">' + (s.w7 == null ? '<span class="chg flat">—</span>' : chgHtml(s.w7)) + '</td><td class="num hide-s">' + (s.mcap ? money(s.mcap) : "—") + '</td><td class="num hide-s">' + (s.vol == null ? "—" : s.vol ? compactN(s.vol) : '<span style="color:var(--muted)">0</span>') + '</td><td class="mvcell">' + trendCell(s) + "</td></tr>";
-    }).join("");
+    document.getElementById("rows").innerHTML = shown.map(function (s) { return rowHtml(s, true); }).join("");
     if (list.length > shown.length) { moreBtn.hidden = false; moreBtn.textContent = "Εμφάνιση περισσότερων (" + (list.length - shown.length) + " ακόμα)"; } else { moreBtn.hidden = true; }
+    renderFavs();
+  }
+  function rowHtml(s, withRank) {
+      return '<tr tabindex="0" data-s="' + esc(s.sym) + '"><td class="starcol"><button type="button" class="star" data-star="' + esc(s.sym) + '" aria-pressed="' + !!favs[s.sym] + '" aria-label="Αγαπημένο: ' + esc(s.dsym) + '">' + (favs[s.sym] ? "★" : "☆") + '</button></td>' +
+        (withRank ? '<td class="l idx num hide-s">' + (s.rank || "—") + "</td>" : "") + '<td class="l"><div class="who">' + monoHtml(s.dsym) + "<div><b>" + esc(s.dsym) + "</b>" + (s.name ? "<span>" + esc(s.name) + "</span>" : "") + "</div></div></td>" +
+        '<td class="num price">' + nf.format(s.price) + " €</td><td>" + chgHtml(s.chg) + '</td><td class="hide-s">' + (s.w7 == null ? '<span class="chg flat">—</span>' : chgHtml(s.w7)) + '</td><td class="num hide-s">' + (s.mcap ? money(s.mcap) : "—") + '</td><td class="num hide-s">' + (s.vol == null ? "—" : s.vol ? compactN(s.vol) : '<span style="color:var(--muted)">0</span>') + '</td><td class="mvcell">' + trendCell(s) + "</td></tr>";
+  }
+  function renderFavs() {
+    var list = rows.filter(function (r) { return favs[r.sym]; }).sort(function (a, b) { return (b.mcap || 0) - (a.mcap || 0) || a.sym.localeCompare(b.sym, "el"); });
+    var cnt = document.getElementById("favcnt");
+    cnt.hidden = !list.length; cnt.textContent = list.length;
+    document.getElementById("favwrap").hidden = !list.length;
+    document.getElementById("favempty").hidden = !!list.length;
+    document.getElementById("favrows").innerHTML = list.map(function (s) { return rowHtml(s, false); }).join("");
   }
 
   function trendCell(s) {
@@ -1311,6 +1352,15 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
     var tr = e.target.closest("tr"); if (tr) openStock(tr.getAttribute("data-s"), tr);
   });
   rowsEl.addEventListener("keydown", function (e) {
+    if ((e.key === "Enter" || e.key === " ") && !e.target.closest("[data-star]")) { var tr = e.target.closest("tr"); if (tr) { e.preventDefault(); openStock(tr.getAttribute("data-s"), tr); } }
+  });
+  var favRowsEl = document.getElementById("favrows");
+  favRowsEl.addEventListener("click", function (e) {
+    var st = e.target.closest("[data-star]");
+    if (st) { toggleFav(st.getAttribute("data-star")); return; }
+    var tr = e.target.closest("tr"); if (tr) openStock(tr.getAttribute("data-s"), tr);
+  });
+  favRowsEl.addEventListener("keydown", function (e) {
     if ((e.key === "Enter" || e.key === " ") && !e.target.closest("[data-star]")) { var tr = e.target.closest("tr"); if (tr) { e.preventDefault(); openStock(tr.getAttribute("data-s"), tr); } }
   });
   ["gainers", "losers", "biggest"].forEach(function (id) {
@@ -1889,16 +1939,19 @@ function start(QUOTE_LINES, META, HIST, INTRA) {
 
   /* views */
   function showView(v) {
-    ["market", "portfolio"].forEach(function (k) {
+    ["market", "favs", "portfolio"].forEach(function (k) {
       document.getElementById("view-" + k).hidden = k !== v;
       document.getElementById("tab-" + k).setAttribute("aria-selected", k === v);
     });
     if (v === "portfolio") renderPortfolio();
+    if (v === "favs") renderFavs();
   }
+  document.getElementById("favgo").addEventListener("click", function () { showView("market"); });
   document.querySelector(".views").addEventListener("click", function (e) { var b = e.target.closest(".viewbtn"); if (b) showView(b.getAttribute("data-view")); });
   setStorageNote();
   renderPortfolio();
   if (location.hash === "#portfolio") showView("portfolio");
+  if (location.hash === "#favorites") showView("favs");
 
   /* εφαρμογή: εγκατάσταση και λειτουργία χωρίς internet (μόνο στο δημόσιο site) */
   (function () {
