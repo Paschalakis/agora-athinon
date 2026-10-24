@@ -10,7 +10,8 @@ on:
   schedule:
     # Κάθε ώρα, Δευτέρα-Παρασκευή, 06:02-15:02 UTC (καλύπτει θερινή και χειμερινή ώρα)
     - cron: "2 6-15 * * 1-5"
-  # Κουμπί «Run workflow» για χειροκίνητη εκτέλεση (τρέχει πάντα μία ενημέρωση)
+  # Κουμπί «Run workflow» για χειροκίνητη εκτέλεση (τρέχει πάντα μία ενημέρωση,
+  # ενώ οι αυτόματες εκκινήσεις ενημερώνουν μόνο όσο είναι ανοιχτή η αγορά)
   workflow_dispatch:
 
 permissions:
@@ -53,7 +54,7 @@ jobs:
           }
 
           while :; do
-            if [ $first -eq 1 ] || in_session; then
+            if { [ $first -eq 1 ] && [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; } || in_session; then
               echo "=== $(TZ=Europe/Athens date '+%d/%m %H:%M') ώρα Ελλάδας ==="
               if python scripts/fetch_data.py; then
                 last_ok=1
